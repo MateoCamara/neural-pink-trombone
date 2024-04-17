@@ -1,10 +1,9 @@
-from typing import List, Callable, Union, Any, TypeVar, Tuple
-from torch import nn
+from typing import List, Any, TypeVar
 from abc import abstractmethod
 import lightning as L
 
-
 Tensor = TypeVar('torch.tensor')
+
 
 class BaseVAE(L.LightningModule):
 
@@ -30,15 +29,3 @@ class BaseVAE(L.LightningModule):
     @abstractmethod
     def loss_function(self, *inputs: Any, **kwargs) -> Tensor:
         pass
-
-    # @abstractmethod
-    # def training_step(self, batch, batch_idx):
-    #     dataset = MiServidorIterableDataset("http://mi.servidor.com", batch_size=32)
-    #     # Aquí el batch_size se configura como 1 porque el batching ya es manejado por el IterableDataset.
-    #     loader = DataLoader(dataset, batch_size=1,
-    #                         num_workers=0)  # num_workers=0 para evitar problemas con IterableDataset.
-    #     return loader
-    #
-    # @abstractmethod
-    # def configure_optimizers(self):
-    #     return torch.optim.Adam(self.parameters(), lr=1e-3)

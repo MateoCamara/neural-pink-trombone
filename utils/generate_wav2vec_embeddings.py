@@ -1,0 +1,63 @@
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+import torch
+
+import torch
+import numpy as np
+import soundfile as sf
+from encodec import EncodecModel
+from tqdm import tqdm
+import scipy.io.wavfile as wavfile
+import librosa
+
+# Define the path for saving embeddings
+save_path = '~/pt_wav2vec'
+os.makedirs(save_path, exist_ok=True)
+train_path = os.path.join(save_path, 'train')
+test_path = os.path.join(save_path, 'test')
+os.makedirs(train_path, exist_ok=True)
+os.makedirs(test_path, exist_ok=True)
+
+
+def _load_wav2vec_model(device):
+    model = EncodecModel.encodec_model_24khz()
+    model.set_target_bandwidth(12.0)
+    model.eval()
+    model.to(device)
+    return model
+
+
+pt_dataset_path = '~/pt_dataset'
+pt_dataset_train = os.path.join(pt_dataset_path, "train")
+pt_dataset_test = os.path.join(pt_dataset_path, "test")
+
+
+def process_dataset(dataset_path, folder):
+    for audio_sample_name in tqdm(os.listdir(dataset_path)):
+        with torch.no_grad():
+            audio_sample_path = os.path.join(dataset_path, audio_sample_name)
+            audio_sample, _ = sf.read(audio_sample_path)
+            audio_sample_16k = librosa.resample(y=audio_sample, orig_sr=48_000,
+                                                target_sr=16000)  # necesario para wav2vec, qué mal
+            audio_tensor = processor(audio_sample_16k, return_tensors="pt", padding=False,
+                                     sampling_rate=16000).input_values.to(device)
+            # Process each sample
+            hidden_dims = model.forward(audio_tensor, output_hidden_states=True)
+            embeddings = hidden_dims[-1][0].cpu()
+            # Inverse process to get audio from embeddings
+            torch.save(embeddings, os.path.join(folder, f'{audio_sample_name.split(".wav")[0]}.pt'))
+
+
+# Setup the model and device
+device = torch.device('cuda:0')
+processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
+model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-base-960h").to(device)
+
+# Process and save embeddings
+process_dataset(pt_dataset_train, train_path)
+process_dataset(pt_dataset_test, test_path)
+
+print("Embedding generation and saving completed.")

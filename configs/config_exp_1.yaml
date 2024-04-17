@@ -1,0 +1,31 @@
+model_params:
+  name: 'BetaVAE'
+  in_channels: 1
+  latent_dim: 64
+  beta: 4
+  beta_params: 1
+  hidden_dims: [ 8, 16, 32, 64, 128 ]
+
+
+data_params:
+  data_path: "~/pt_dataset"
+  data_type: "spectrogram"
+  num_workers: 31
+  batch_size: 32
+
+
+exp_params:
+  name: 'Experiment1'
+  LR: 0.005
+  weight_decay: 0.0
+  kld_weight: 0.000001
+  manual_seed: 1265
+
+trainer_params:
+  devices: [ 0 ]
+  patience: 10
+  max_epochs: 1000
+
+logging_params:
+  save_dir: "logs/"
+  name: "betaVAE"
