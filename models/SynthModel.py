@@ -30,9 +30,9 @@ class SynthStage(L.LightningModule):
         for h_dim in hidden_dims:
             modules.append(nn.Sequential(
                 nn.Conv2d(input_channel, h_dim, kernel_size=3, stride=2, padding=1),
-                nn.BatchNorm2d(h_dim) if h_dim != hidden_dims[0] else nn.ReLU(),
-                nn.ReLU())
-            )
+                nn.ReLU(),
+                # nn.BatchNorm2d(h_dim) if h_dim != hidden_dims[0] else nn.Identity()
+            ))
             input_channel = h_dim
         self.synth_stage = nn.Sequential(*modules)
 

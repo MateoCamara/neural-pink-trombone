@@ -33,7 +33,7 @@ class SpectrogramDataloader(Dataset):
         # Carga el archivo de audio
         waveform, sample_rate = torchaudio.load(audio_path)
         mel_spec = self._compute_mel_spectrogram(waveform, sample_rate, 8000, power=True)
-        mel_spec = self.normalizar_mel_spec(mel_spec)
+        mel_spec = self.normalizar_mel_spec(mel_spec).float()
 
         # Obtiene los parámetros (etiquetas) asociados
         parameters = self.metadata[audio_name]

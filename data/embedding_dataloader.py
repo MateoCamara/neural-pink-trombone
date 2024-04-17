@@ -32,7 +32,7 @@ class EmbeddingDataloader(Dataset):
 
         # Carga el archivo de audio
         # TODO: normalizar los embeddings?
-        embbeding = torch.load(embbeding_path, map_location=torch.device('cpu'))
+        embbeding = torch.load(embbeding_path)
 
         # Obtiene los parámetros (etiquetas) asociados
 
