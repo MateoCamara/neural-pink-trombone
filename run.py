@@ -41,7 +41,7 @@ parser.add_argument('--config', '-c',
                     dest="filename",
                     metavar='FILE',
                     help='path to the config file',
-                    default='./configs/config_exp_1.yaml')
+                    default='./configs/config_exp_2.yaml')
 
 args = parser.parse_args()
 

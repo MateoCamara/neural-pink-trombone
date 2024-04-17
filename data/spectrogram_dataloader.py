@@ -64,15 +64,19 @@ class SpectrogramDataloader(Dataset):
         else:
             return S
 
+    # def normalizar_mel_spec(self, mel_spec):
+    #     mel_spec = np.clip(mel_spec, self.min_spec_value, self.max_spec_value)
+    #     mel_spec = (mel_spec + ((self.min_spec_value + self.max_spec_value) / 2)) / ((self.max_spec_value - self.min_spec_value) / 2)
+    #     return mel_spec
+
     def normalizar_mel_spec(self, mel_spec):
         mel_spec = np.clip(mel_spec, self.min_spec_value, self.max_spec_value)
-        mel_spec = (mel_spec + 10) / 55
-        mel_spec = (mel_spec + ((self.min_spec_value + self.max_spec_value) / 2)) / ((self.max_spec_value - self.min_spec_value) / 2)
+        mel_spec = (mel_spec - self.min_spec_value) / (self.max_spec_value - self.min_spec_value)
         return mel_spec
 
     def normalizar_params(self, params):
         for i, (low, high) in enumerate(self.bounds):
-            params[i] = 2 * (params[i] - low) / (high - low) - 1
+            params[i] = (params[i] - low) / (high - low)
         return params
 
     def find_min_max_values(self):

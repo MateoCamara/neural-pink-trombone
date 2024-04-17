@@ -1,6 +1,7 @@
 from typing import List, Any, TypeVar
 from abc import abstractmethod
 import lightning as L
+import torch
 
 Tensor = TypeVar('torch.tensor')
 

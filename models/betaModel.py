@@ -23,6 +23,10 @@ class BetaVAE(BaseVAE):
 
         self.build_encoder(in_channels, hidden_dims)
         self.build_decoder(hidden_dims[::-1], in_channels)
+        print(self.encoder)
+        print(self.encoder_output)
+        print(self.decoder_input)
+        print(self.decoder)
 
     def build_encoder(self, in_channels, hidden_dims):
         """Construye la parte del codificador del VAE."""
@@ -30,8 +34,9 @@ class BetaVAE(BaseVAE):
         for h_dim in hidden_dims:
             modules.append(nn.Sequential(
                 nn.Conv2d(in_channels, out_channels=h_dim, kernel_size=3, stride=2, padding=1),
-                nn.BatchNorm2d(h_dim) if h_dim != hidden_dims[0] else nn.ReLU(),
-                nn.ReLU()))
+                nn.ReLU(),
+                # nn.BatchNorm2d(h_dim) if h_dim != hidden_dims[0] else nn.Identity()
+                ))
             in_channels = h_dim
 
         self.encoder = nn.Sequential(*modules)
@@ -69,11 +74,10 @@ class BetaVAE(BaseVAE):
                     hidden_dims) else in_channels_original,
                                    kernel_size=3, stride=2, padding=1,
                                    output_padding=1 if i != len(hidden_dims) - 2 else (1, 0)),
-                nn.ReLU()))
+                nn.ReLU() if h_dim != hidden_dims[-1] else nn.Sigmoid(),
+                nn.BatchNorm2d(hidden_dims[i + 1]) if i + 1 < len(hidden_dims) else nn.Identity()
+            ))
         self.decoder = nn.Sequential(*modules)
-
-        # Capa final para ajustar los canales de salida
-        self.final_layer = nn.Hardtanh()
 
     def encode(self, input: Tensor):
         """Codifica la entrada y devuelve los códigos latentes."""
@@ -88,7 +92,7 @@ class BetaVAE(BaseVAE):
         z = self.decoder_input(z)
         z = z.view(-1, self.encoder_output_size[1], self.encoder_output_size[2], self.encoder_output_size[3])
         result = self.decoder(z)
-        return self.final_layer(result)
+        return result
 
     def reparameterize(self, mu: Tensor, logvar: Tensor):
         """Reparametrización para obtener z."""

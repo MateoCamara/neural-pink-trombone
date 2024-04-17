@@ -67,3 +67,17 @@ class SynthStage(L.LightningModule):
             for module in model:
                 input_tensor = module(input_tensor)
         return input_tensor.size()
+
+    def print_model_summary(self):
+        """
+        Prints a summary of the model layers and parameters.
+        """
+        print("Model Summary:\n")
+        total_params = 0
+        for name, module in self.model.named_modules():
+            # Ignoring modules that do not have learnable parameters
+            if list(module.parameters(recurse=False)):
+                num_params = sum(p.numel() for p in module.parameters() if p.requires_grad)
+                print(f"{name} - {module.__class__.__name__} : {num_params} trainable parameters")
+                total_params += num_params
+        print(f"\nTotal trainable parameters: {total_params}")

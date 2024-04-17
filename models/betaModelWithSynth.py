@@ -37,8 +37,9 @@ class BetaVAESynth(BaseVAE):
         for h_dim in hidden_dims:
             modules.append(nn.Sequential(
                 nn.Conv2d(in_channels, out_channels=h_dim, kernel_size=3, stride=2, padding=1),
-                nn.BatchNorm2d(h_dim) if h_dim != hidden_dims[0] else nn.ReLU(),
-                nn.ReLU()))
+                nn.ReLU(),
+                # nn.BatchNorm2d(h_dim) if h_dim != hidden_dims[0] else nn.ReLU()
+            ))
             in_channels = h_dim
 
         self.encoder = nn.Sequential(*modules)
@@ -77,11 +78,10 @@ class BetaVAESynth(BaseVAE):
                     hidden_dims) else in_channels_original,
                                    kernel_size=3, stride=2, padding=1,
                                    output_padding=1 if i != len(hidden_dims) - 2 else (1, 0)),
-                nn.ReLU()))
+                nn.ReLU() if h_dim != hidden_dims[-1] else nn.Sigmoid(),
+                # nn.BatchNorm2d(hidden_dims[i + 1]) if i + 1 < len(hidden_dims) else nn.Identity()
+            ))
         self.decoder = nn.Sequential(*modules)
-
-        # Capa final para ajustar los canales de salida
-        self.final_layer = nn.Hardtanh()
 
     def build_synth_stage(self, hidden_dims):
         modules = []
@@ -116,7 +116,7 @@ class BetaVAESynth(BaseVAE):
         z = self.decoder_input(z)
         z = z.view(-1, self.encoder_output_size[1], self.encoder_output_size[2], self.encoder_output_size[3])
         result = self.decoder(z)
-        return self.final_layer(result)
+        return result
 
     def reparameterize(self, mu: Tensor, logvar: Tensor):
         """Reparametrización para obtener z."""
@@ -139,6 +139,9 @@ class BetaVAESynth(BaseVAE):
         params_pred = args[4]
         params_true = args[5]
         kld_weight = kwargs['M_N']
+
+        if torch.isnan(recons).any() or torch.isnan(params_pred).any():
+            print("Reconstruction or params prediction is NaN")
 
         recons_loss = F.mse_loss(recons, input, reduction='sum')
         kld_loss = torch.sum(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
