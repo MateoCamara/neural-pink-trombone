@@ -2,7 +2,7 @@ import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+from transformers import Wav2Vec2Model, Wav2Vec2FeatureExtractor
 import torch
 
 import torch
@@ -15,6 +15,7 @@ import librosa
 
 # Define the path for saving embeddings
 save_path = '~/pt_wav2vec'
+save_path = os.path.expanduser(save_path)
 os.makedirs(save_path, exist_ok=True)
 train_path = os.path.join(save_path, 'train')
 test_path = os.path.join(save_path, 'test')
@@ -31,6 +32,7 @@ def _load_wav2vec_model(device):
 
 
 pt_dataset_path = '~/pt_dataset'
+pt_dataset_path = os.path.expanduser(pt_dataset_path)
 pt_dataset_train = os.path.join(pt_dataset_path, "train")
 pt_dataset_test = os.path.join(pt_dataset_path, "test")
 
@@ -45,16 +47,16 @@ def process_dataset(dataset_path, folder):
             audio_tensor = processor(audio_sample_16k, return_tensors="pt", padding=False,
                                      sampling_rate=16000).input_values.to(device)
             # Process each sample
-            hidden_dims = model.forward(audio_tensor, output_hidden_states=True)
-            embeddings = hidden_dims[-1][0].cpu()
+            output = model(audio_tensor)
+            embeddings = output.extract_features.detach().cpu()
             # Inverse process to get audio from embeddings
             torch.save(embeddings, os.path.join(folder, f'{audio_sample_name.split(".wav")[0]}.pt'))
 
 
 # Setup the model and device
 device = torch.device('cuda:0')
-processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
-model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-base-960h").to(device)
+processor = Wav2Vec2FeatureExtractor.from_pretrained("facebook/wav2vec2-large-xlsr-53")
+model = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-large-xlsr-53").to(device)
 
 # Process and save embeddings
 process_dataset(pt_dataset_train, train_path)

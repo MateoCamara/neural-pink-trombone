@@ -41,7 +41,7 @@ parser.add_argument('--config', '-c',
                     dest="filename",
                     metavar='FILE',
                     help='path to the config file',
-                    default='./configs/config_exp_encodec.yaml')
+                    default='./configs/config_exp_wav2vec.yaml')
 
 args = parser.parse_args()
 

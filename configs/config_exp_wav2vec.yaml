@@ -6,15 +6,13 @@ model_params:
   beta_params: 1
   hidden_dims: [8, 16, 32, 64, 128]
   codec_dim: 49
-  time_dim: 768
+  time_dim: 512
 
 data_params:
   data_path: "~/pt_wav2vec"
   data_type: "embedding"
   num_workers: 31
   batch_size: 32
-  patience: 10
-
 
 exp_params:
   name: 'BaseExperiment'
@@ -22,6 +20,7 @@ exp_params:
   weight_decay: 0.0
   kld_weight: 0.000001
   manual_seed: 1265
+  patience: 10
 
 trainer_params:
   devices: [ 0 ]
