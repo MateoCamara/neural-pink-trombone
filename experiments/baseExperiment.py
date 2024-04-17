@@ -68,7 +68,6 @@ class BaseExperiment(L.LightningModule):
         self.total_val_loss = 0
         self.denom_train = 0
         self.denom_val = 0
-        self.sample = None
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.model.parameters(),

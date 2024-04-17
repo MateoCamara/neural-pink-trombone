@@ -41,7 +41,7 @@ parser.add_argument('--config', '-c',
                     dest="filename",
                     metavar='FILE',
                     help='path to the config file',
-                    default='./configs/config_exp_encodec.yaml')
+                    default='./configs/config_exp_1.yaml')
 
 args = parser.parse_args()
 
@@ -53,7 +53,7 @@ with open(args.filename, 'r') as file:
         print(exc)
 
 tb_logger = TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
-                              name=config['model_params']['name'], )
+                              name=config['logging_params']['name'], )
 
 model = load_model(config['model_params']['name'])
 experiment = load_experiment(config['exp_params']['name'], model)
@@ -71,7 +71,7 @@ val_loader = DataLoader(val_dataset, batch_size=config['data_params']['batch_siz
 tb_logger.log_hyperparams(config)
 
 # data.setup()
-early_stop_callback = EarlyStopping(monitor='val_loss', patience=10, verbose=True, mode='min')
+early_stop_callback = EarlyStopping(monitor='val_loss', patience=config['exp_params']['patience'], verbose=True, mode='min')
 runner = L.Trainer(logger=tb_logger,
                    callbacks=[
                        LearningRateMonitor(),

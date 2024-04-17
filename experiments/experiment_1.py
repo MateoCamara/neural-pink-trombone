@@ -42,6 +42,7 @@ class Experiment1(BaseExperiment):
         super().on_validation_epoch_end()
         if self.sample is not None:
             self.log_spectrogram_images(self.sample[1], self.sample[0], self.current_epoch)
+        self.sample = None
 
     def log_spectrogram_images(self, input: Tensor, reconstructed: Tensor, step: int):
         images = torch.stack([input, reconstructed], dim=0)
