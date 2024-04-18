@@ -1,9 +1,7 @@
 import torch
 from torch import optim
-from aprox_1_vae.base import BaseVAE
 import lightning as L
 from typing import TypeVar
-from torchvision.utils import make_grid
 
 torch.manual_seed(1)
 
@@ -12,9 +10,7 @@ Tensor = TypeVar('torch.tensor')
 
 class BaseExperiment(L.LightningModule):
 
-    def __init__(self,
-                 vae_model: BaseVAE,
-                 config: dict) -> None:
+    def __init__(self, vae_model, config) -> None:
         super().__init__()
 
         self.model = vae_model.float()

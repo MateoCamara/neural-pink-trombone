@@ -2,6 +2,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from typing import List, TypeVar
+
+import utils.utils
 from models.base import BaseVAE
 
 Tensor = TypeVar('torch.tensor')
@@ -10,8 +12,8 @@ Tensor = TypeVar('torch.tensor')
 class BetaVAESynth(BaseVAE):
     num_iter = 0  # Variable estática global para llevar la cuenta de las iteraciones
 
-    def __init__(self, in_channels: int, latent_dim: int, hidden_dims: List = None, beta: int = 4, beta_params: int = 1,
-                 num_synth_params: int = 8, hidden_dims_synth_stage: List = None, **kwargs):
+    def __init__(self, in_channels: int, latent_dim: int, hidden_dims: List = None, beta: int = 4, beta_params: list = [],
+                 num_synth_params: int = 8, hidden_dims_synth_stage: List = None, params_weight: int = 1, **kwargs):
         super().__init__()
 
         # Definición de variables internas
@@ -19,6 +21,7 @@ class BetaVAESynth(BaseVAE):
         self.beta = beta
         self.num_synth_params = num_synth_params
         self.beta_params = beta_params
+        self.params_weight = params_weight
 
         # Inicialización de dimensiones ocultas si no se proporcionan
         if hidden_dims is None:
@@ -27,9 +30,14 @@ class BetaVAESynth(BaseVAE):
         if hidden_dims_synth_stage is None:
             hidden_dims_synth_stage = [int(self.latent_dim / 2), int(self.latent_dim / 4), int(self.latent_dim / 8)]
 
+        if beta_params is None:
+            self.beta_params = [1] * num_synth_params
+
         self.build_encoder(in_channels, hidden_dims)
         self.build_synth_stage(hidden_dims_synth_stage)
         self.build_decoder(hidden_dims[::-1], in_channels)
+
+        self.print_neural_graph()
 
     def build_encoder(self, in_channels, hidden_dims):
         """Construye la parte del codificador del VAE."""
@@ -140,20 +148,26 @@ class BetaVAESynth(BaseVAE):
         params_true = args[5]
         kld_weight = kwargs['M_N']
 
-        if torch.isnan(recons).any() or torch.isnan(params_pred).any():
-            print("Reconstruction or params prediction is NaN")
-
         recons_loss = F.mse_loss(recons, input, reduction='sum')
         kld_loss = torch.sum(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
-        params_loss = F.mse_loss(params_pred, params_true, reduction='sum')
+
+        loss_params = []
+        for param_pred, param_true, self.beta_param in zip(params_pred, params_true, self.beta_params):
+            loss_params.append(F.mse_loss(param_pred, param_true, reduction='sum') * self.beta_param * self.params_weight)
+
+        loss_params_dict = {f"{param_name}_error": loss for param_name, loss in zip(utils.utils.params_names, loss_params)}
+
+        params_loss = sum(loss_params)
 
         weighted_kld_loss = self.beta * kld_weight * kld_loss
-        weighted_params_loss = self.beta_params * params_loss
 
-        loss = recons_loss + weighted_kld_loss + weighted_params_loss
+        loss = recons_loss + weighted_kld_loss + params_loss
 
-        return {'loss': loss, 'Reconstruction_Loss': recons_loss, 'KLD': weighted_kld_loss,
-                'Params_Loss': weighted_params_loss}
+        return_dict = {'loss': loss, 'Reconstruction_Loss': recons_loss, 'KLD': weighted_kld_loss, 'Params_Loss': params_loss}
+        return_dict.update(loss_params_dict)
+
+        return return_dict
+
 
     def sample(self, num_samples: int, current_device: int, **kwargs) -> Tensor:
         z = torch.randn(num_samples, self.latent_dim).to(current_device)

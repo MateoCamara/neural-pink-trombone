@@ -73,7 +73,7 @@ class BetaVAE(BaseVAE):
                                    kernel_size=3, stride=2, padding=1,
                                    output_padding=1 if i != len(hidden_dims) - 2 else (1, 0)),
                 nn.ReLU() if h_dim != hidden_dims[-1] else nn.Sigmoid(),
-                nn.BatchNorm2d(hidden_dims[i + 1]) if i + 1 < len(hidden_dims) else nn.Identity()
+                # nn.BatchNorm2d(hidden_dims[i + 1]) if i + 1 < len(hidden_dims) else nn.Identity()
             ))
         self.decoder = nn.Sequential(*modules)
 

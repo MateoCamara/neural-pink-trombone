@@ -4,23 +4,31 @@ from torch.nn import functional as F
 from typing import List, TypeVar
 import lightning as L
 
+import utils.utils
+
 Tensor = TypeVar('torch.tensor')
 
 
 class SynthStage(L.LightningModule):
     num_iter = 0  # Variable estática global para llevar la cuenta de las iteraciones
 
-    def __init__(self, codec_dim: int, time_dim: int, hidden_dims: List = None, output_dims: int = None, **kwargs):
+    def __init__(self, codec_dim: int, time_dim: int, hidden_dims: List = None, output_dims: int = None,
+                 beta_params: list = [], params_weight: int = 1, **kwargs):
         super().__init__()
 
         self.codec_dim = codec_dim
         self.time_dim = time_dim
+        self.beta_params = beta_params
+        self.params_weight = params_weight
 
         if hidden_dims is None:
             hidden_dims = [codec_dim, codec_dim // 2, codec_dim // 4, codec_dim // 8]
 
         if output_dims is None:
             output_dims = 8
+
+        if beta_params is None:
+            self.beta_params = [1] * output_dims
 
         self.build_stage(hidden_dims=hidden_dims, output_dims=output_dims)
 
@@ -36,7 +44,8 @@ class SynthStage(L.LightningModule):
             input_channel = h_dim
         self.synth_stage = nn.Sequential(*modules)
 
-        flat_size = self._calculate_output_size(self.synth_stage, torch.randn(1, 1, self.codec_dim, self.time_dim)).numel()
+        flat_size = self._calculate_output_size(self.synth_stage,
+                                                torch.randn(1, 1, self.codec_dim, self.time_dim)).numel()
 
         self.synth_stage_final_layer = nn.Sequential(
             nn.Flatten(),
@@ -57,9 +66,20 @@ class SynthStage(L.LightningModule):
         input = args[1]
         params_true = args[2]
 
-        loss = F.mse_loss(params_pred, params_true, reduction='sum')
+        loss_params = []
+        for param_pred, param_true, self.beta_param in zip(params_pred, params_true, self.beta_params):
+            loss_params.append(
+                F.mse_loss(param_pred, param_true, reduction='sum') * self.beta_param * self.params_weight)
 
-        return {'loss': loss}
+        loss_params_dict = {f"{param_name}_error": loss for param_name, loss in
+                            zip(utils.utils.params_names, loss_params)}
+
+        loss = sum(loss_params)
+
+        return_dict = {'loss': loss}
+        return_dict.update(loss_params_dict)
+
+        return return_dict
 
     def _calculate_output_size(self, model, input_tensor):
         """Calcula el tamaño de salida de un modelo dado un tensor de entrada."""
