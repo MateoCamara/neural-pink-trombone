@@ -162,13 +162,4 @@ class BetaVAESynth(BaseVAE):
     def generate(self, x: Tensor, **kwargs) -> Tensor:
         return self.forward(x)[0]
 
-    def print_neural_graph(self):
-        print(self.encoder)
-        print(self.encoder_output)
-        print(self.fc_mu)
-        print(self.fc_var)
-        print(self.decoder_input)
-        print(self.decoder)
-        print(self.final_layer)
-        print(self.synth_stage)
-        print(self.synth_stage_final_layer)
+

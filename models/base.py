@@ -30,3 +30,11 @@ class BaseVAE(L.LightningModule):
     @abstractmethod
     def loss_function(self, *inputs: Any, **kwargs) -> Tensor:
         pass
+
+    def print_neural_graph(self):
+        print(self.encoder)
+        print(self.encoder_output)
+        print(self.fc_mu)
+        print(self.fc_var)
+        print(self.decoder_input)
+        print(self.decoder)

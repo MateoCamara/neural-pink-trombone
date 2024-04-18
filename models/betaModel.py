@@ -23,10 +23,8 @@ class BetaVAE(BaseVAE):
 
         self.build_encoder(in_channels, hidden_dims)
         self.build_decoder(hidden_dims[::-1], in_channels)
-        print(self.encoder)
-        print(self.encoder_output)
-        print(self.decoder_input)
-        print(self.decoder)
+
+        self.print_neural_graph()
 
     def build_encoder(self, in_channels, hidden_dims):
         """Construye la parte del codificador del VAE."""
