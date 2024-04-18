@@ -15,7 +15,7 @@ data_params:
 
 
 exp_params:
-  name: 'Experiment1'
+  name_exp: 'Experiment1'
   LR: 0.005
   weight_decay: 0.0
   kld_weight: 0.000001

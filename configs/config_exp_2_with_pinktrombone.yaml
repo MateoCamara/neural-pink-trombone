@@ -1,25 +1,28 @@
 model_params:
-  name: 'SynthStage'
+  name: 'BetaVAESynth'
   in_channels: 1
   latent_dim: 64
   beta: 4
   beta_params: [1, 1, 1, 1, 1, 1, 1, 1]
   hidden_dims: [8, 16, 32, 64, 128]
-  codec_dim: 49
-  time_dim: 512
+  use_pink_trombone: True
+  pt_server: '127.0.0.1'
+  pt_port: 3000
+
 
 data_params:
-  data_path: "~/pt_wav2vec"
-  data_type: "embedding"
+  data_path: "~/pt_dataset"
+  data_type: "spectrogram"
   num_workers: 31
   batch_size: 32
 
+
 exp_params:
-  name_exp: 'BaseExperiment'
+  name_exp: 'Experiment1'
   LR: 0.005
   weight_decay: 0.0
   kld_weight: 0.000001
-  params_weight: 1
+  params_weight: 10
   manual_seed: 1265
   patience: 100
 
@@ -29,4 +32,4 @@ trainer_params:
 
 logging_params:
   save_dir: "logs/"
-  name: "Wav2vec"
+  name: "betaVAESynth"

@@ -15,7 +15,7 @@ from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, Ea
 def load_model(model_name):
     models_module = importlib.import_module("models")
     model_class = getattr(models_module, model_name)
-    return model_class(**config['model_params'])
+    return model_class(**config['model_params'], **config['exp_params'])
 
 
 def load_experiment(exp_name, model):
@@ -41,7 +41,7 @@ parser.add_argument('--config', '-c',
                     dest="filename",
                     metavar='FILE',
                     help='path to the config file',
-                    default='./configs/config_exp_wav2vec.yaml')
+                    default='./configs/config_exp_2_with_pinktrombone.yaml')
 
 args = parser.parse_args()
 
@@ -56,7 +56,7 @@ tb_logger = TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
                               name=config['logging_params']['name'], )
 
 model = load_model(config['model_params']['name'])
-experiment = load_experiment(config['exp_params']['name'], model)
+experiment = load_experiment(config['exp_params']['name_exp'], model)
 data_path = config['data_params']['data_path']
 data_path = os.path.expanduser(data_path)
 

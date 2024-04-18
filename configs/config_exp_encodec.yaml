@@ -18,13 +18,13 @@ data_params:
 
 
 exp_params:
-  name: 'BaseExperiment'
+  name_exp: 'BaseExperiment'
   LR: 0.005
   weight_decay: 0.0
   kld_weight: 0.000001
   params_weight: 1
   manual_seed: 1265
-  patience: 10
+  patience: 100
 
 trainer_params:
   devices: [ 0 ]

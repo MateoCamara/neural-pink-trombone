@@ -5,6 +5,7 @@ from typing import List, TypeVar
 import lightning as L
 
 import utils.utils
+from models.base_pink_trombone_connection import PinkTromboneConnection
 
 Tensor = TypeVar('torch.tensor')
 
@@ -31,6 +32,13 @@ class SynthStage(L.LightningModule):
             self.beta_params = [1] * output_dims
 
         self.build_stage(hidden_dims=hidden_dims, output_dims=output_dims)
+
+        self.use_pink_trombone = kwargs.get('use_pink_trombone', False)
+
+        if self.use_pink_trombone:
+            self.regen_weight = kwargs.get('regen_weight', 1.0)
+            self.pink_trombone_connection = PinkTromboneConnection(kwargs.get('pt_server', '127.0.0.1'), kwargs.get('pt_port', 3000))
+
 
     def build_stage(self, hidden_dims, output_dims):
         modules = []
@@ -66,18 +74,29 @@ class SynthStage(L.LightningModule):
         input = args[1]
         params_true = args[2]
 
-        loss_params = []
-        for param_pred, param_true, self.beta_param in zip(params_pred, params_true, self.beta_params):
-            loss_params.append(
-                F.mse_loss(param_pred, param_true, reduction='sum') * self.beta_param * self.params_weight)
+        loss = 0
+        return_dict = {}
 
-        loss_params_dict = {f"{param_name}_error": loss for param_name, loss in
-                            zip(utils.utils.params_names, loss_params)}
+        if self.use_pink_trombone:
+            # TODO: hay que quitar el hardcoding del audiolength
+            regen_mel = self.pink_trombone_connection.regenerate_audio_from_pred_params(params_pred.detach().cpu().numpy(), audio_length=1.0).to(input.device)
+            param_audio_regenerated_loss = F.mse_loss(input, regen_mel, reduction='sum') * self.regen_weight
+            loss += param_audio_regenerated_loss
+            return_dict.update({'param_audio_regenerated_loss': param_audio_regenerated_loss})
 
-        loss = sum(loss_params)
+        else:
+            loss_params = []
+            for param_pred, param_true, self.beta_param in zip(params_pred, params_true, self.beta_params):
+                loss_params.append(F.mse_loss(param_pred, param_true, reduction='sum') * self.beta_param * self.params_weight)
+
+            loss_params_dict = {f"{param_name}_error": loss for param_name, loss in zip(utils.utils.params_names, loss_params)}
+
+            params_loss = sum(loss_params)
+            loss += params_loss
+            return_dict.update({'params_loss': params_loss})
+            return_dict.update(loss_params_dict)
 
         return_dict = {'loss': loss}
-        return_dict.update(loss_params_dict)
 
         return return_dict
 

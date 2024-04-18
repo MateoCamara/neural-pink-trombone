@@ -4,6 +4,7 @@ from torch.nn import functional as F
 from typing import List, TypeVar
 
 import utils.utils
+from models.base_pink_trombone_connection import PinkTromboneConnection
 from models.base import BaseVAE
 
 Tensor = TypeVar('torch.tensor')
@@ -38,6 +39,12 @@ class BetaVAESynth(BaseVAE):
         self.build_decoder(hidden_dims[::-1], in_channels)
 
         self.print_neural_graph()
+
+        self.use_pink_trombone = kwargs.get('use_pink_trombone', False)
+
+        if self.use_pink_trombone:
+            self.regen_weight = kwargs.get('regen_weight', 1.0)
+            self.pink_trombone_connection = PinkTromboneConnection(kwargs.get('pt_server', '127.0.0.1'), kwargs.get('pt_port', 3000))
 
     def build_encoder(self, in_channels, hidden_dims):
         """Construye la parte del codificador del VAE."""
@@ -148,23 +155,38 @@ class BetaVAESynth(BaseVAE):
         params_true = args[5]
         kld_weight = kwargs['M_N']
 
+        loss = 0
+
         recons_loss = F.mse_loss(recons, input, reduction='sum')
+        loss += recons_loss
+
         kld_loss = torch.sum(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
-
-        loss_params = []
-        for param_pred, param_true, self.beta_param in zip(params_pred, params_true, self.beta_params):
-            loss_params.append(F.mse_loss(param_pred, param_true, reduction='sum') * self.beta_param * self.params_weight)
-
-        loss_params_dict = {f"{param_name}_error": loss for param_name, loss in zip(utils.utils.params_names, loss_params)}
-
-        params_loss = sum(loss_params)
-
         weighted_kld_loss = self.beta * kld_weight * kld_loss
+        loss += weighted_kld_loss
 
-        loss = recons_loss + weighted_kld_loss + params_loss
+        return_dict = {'Reconstruction_Loss': recons_loss, 'KLD': weighted_kld_loss}
 
-        return_dict = {'loss': loss, 'Reconstruction_Loss': recons_loss, 'KLD': weighted_kld_loss, 'Params_Loss': params_loss}
-        return_dict.update(loss_params_dict)
+        if self.use_pink_trombone:
+            # TODO: hay que quitar el hardcoding del audiolength
+            regen_mel = self.pink_trombone_connection.regenerate_audio_from_pred_params(params_pred.detach().cpu().numpy(), audio_length=1.0).to(input.device)
+            param_audio_regenerated_loss = F.mse_loss(input, regen_mel, reduction='sum') * self.regen_weight
+            loss += param_audio_regenerated_loss
+            return_dict.update({'param_audio_regenerated_loss': param_audio_regenerated_loss})
+
+        else:
+            loss_params = []
+            for param_pred, param_true, self.beta_param in zip(params_pred, params_true, self.beta_params):
+                loss_params.append(F.mse_loss(param_pred, param_true, reduction='sum') * self.beta_param * self.params_weight)
+
+            loss_params_dict = {f"{param_name}_error": loss for param_name, loss in zip(utils.utils.params_names, loss_params)}
+
+            params_loss = sum(loss_params)
+            loss += params_loss
+            return_dict.update({'params_loss': params_loss})
+            return_dict.update(loss_params_dict)
+
+
+        return_dict.update({'loss': loss})
 
         return return_dict
 
@@ -175,5 +197,3 @@ class BetaVAESynth(BaseVAE):
 
     def generate(self, x: Tensor, **kwargs) -> Tensor:
         return self.forward(x)[0]
-
-
