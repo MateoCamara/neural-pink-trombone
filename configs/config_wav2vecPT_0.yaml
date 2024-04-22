@@ -13,6 +13,7 @@ model_params:
 
 data_params:
   data_path: "~/pt_wav2vec"
+  audio_path: "~/pt_dataset"
   data_type: "embedding"
   num_workers: 31
   batch_size: 32

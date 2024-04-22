@@ -12,6 +12,7 @@ model_params:
 
 data_params:
   data_path: "~/pt_dataset"
+  audio_path: "~/pt_dataset"
   data_type: "spectrogram"
   num_workers: 31
   batch_size: 32

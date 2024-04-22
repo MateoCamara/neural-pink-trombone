@@ -139,7 +139,7 @@ class BetaVAESynth(BaseVAE):
         eps = torch.randn_like(std)
         return eps.mul(std).add_(mu)
 
-    def forward(self, input: Tensor, params: Tensor):
+    def forward(self, input: Tensor, params: Tensor, **kwargs):
         """Propagación hacia adelante del modelo."""
         mu, log_var = self.encode(input)
         z = self.reparameterize(mu, log_var)

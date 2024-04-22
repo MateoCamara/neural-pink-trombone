@@ -25,8 +25,14 @@ class BaseExperiment(L.LightningModule):
         return self.model(input, **kwargs)
 
     def training_step(self, batch, batch_idx):
-        x, params = batch
-        y_hat = self.forward(x, params=params)
+        x = batch[0]
+        params = batch[1]
+        if len(batch) == 3:
+            original_audio = batch[2]
+        else:
+            original_audio = None
+
+        y_hat = self.forward(x, params=params, original_audio=original_audio)
 
         train_loss = self.model.loss_function(*y_hat,
                                               batch_idx=batch_idx)
@@ -38,8 +44,14 @@ class BaseExperiment(L.LightningModule):
         return train_loss['loss']
 
     def validation_step(self, batch, batch_idx):
-        x, params = batch
-        y_hat = self.forward(x, params=params)
+        x = batch[0]
+        params = batch[1]
+        if len(batch) == 3:
+            original_audio = batch[2]
+        else:
+            original_audio = None
+
+        y_hat = self.forward(x, params=params, original_audio=original_audio)
 
         val_loss = self.model.loss_function(*y_hat,
                                             batch_idx=batch_idx)

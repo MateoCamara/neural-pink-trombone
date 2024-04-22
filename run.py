@@ -41,7 +41,7 @@ parser.add_argument('--config', '-c',
                     dest="filename",
                     metavar='FILE',
                     help='path to the config file',
-                    default='./configs/config_exp_2_with_pinktrombone.yaml')
+                    default='./configs/config_encodecPT_0.yaml')
 
 args = parser.parse_args()
 
@@ -62,8 +62,8 @@ data_path = os.path.expanduser(data_path)
 
 dataset = load_dataloader(config['data_params']['data_type'])
 
-train_dataset = dataset(os.path.join(data_path, "train"), os.path.join(data_path, "train.json"))
-val_dataset = dataset(os.path.join(data_path, "test"), os.path.join(data_path, "test.json"))
+train_dataset = dataset(os.path.join(data_path, "train"), os.path.join(data_path, "train.json"), **config['data_params'])
+val_dataset = dataset(os.path.join(data_path, "test"), os.path.join(data_path, "test.json"), **config['data_params'])
 
 train_loader = DataLoader(train_dataset, batch_size=config['data_params']['batch_size'], shuffle=True, num_workers=config['data_params']['num_workers'])
 val_loader = DataLoader(val_dataset, batch_size=config['data_params']['batch_size'], num_workers=config['data_params']['num_workers'])

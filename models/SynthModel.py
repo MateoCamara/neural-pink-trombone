@@ -63,16 +63,17 @@ class SynthStage(L.LightningModule):
             nn.Sigmoid()
         )
 
-    def forward(self, input: Tensor, params: Tensor):
+    def forward(self, input: Tensor, params: Tensor, original_audio: Tensor = None):
         x = self.synth_stage(input)
         result = self.synth_stage_final_layer(x)
-        return [result, input, params]
+        return [result, input, params, original_audio]
 
     def loss_function(self, *args, **kwargs) -> dict:
         self.num_iter += 1
         params_pred = args[0]
         input = args[1]
         params_true = args[2]
+        original_audio = args[3]
 
         loss = 0
         return_dict = {}
@@ -80,7 +81,7 @@ class SynthStage(L.LightningModule):
         if self.use_pink_trombone:
             # TODO: hay que quitar el hardcoding del audiolength
             regen_mel = self.pink_trombone_connection.regenerate_audio_from_pred_params(params_pred.detach().cpu().numpy(), audio_length=1.0).to(input.device)
-            param_audio_regenerated_loss = F.mse_loss(input, regen_mel, reduction='sum') * self.regen_weight
+            param_audio_regenerated_loss = F.mse_loss(original_audio, regen_mel, reduction='sum') * self.regen_weight
             loss += param_audio_regenerated_loss
             return_dict.update({'param_audio_regenerated_loss': param_audio_regenerated_loss})
 
