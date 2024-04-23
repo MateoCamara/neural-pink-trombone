@@ -7,10 +7,11 @@ import random
 import librosa
 import torch
 import soundfile as sf
+from tqdm import tqdm
 
 
 class PTServidorDataset(IterableDataset):
-    bounds = [(75, 330), (0.5, 1), (12, 29), (2.05, 3.5), (0.6, 1.7), (20.0, 40.0), (0.5, 2), (0.5, 2.0)]
+    bounds = [(100, 100), (1, 1), (12, 29), (2.05, 3.5), (0.6, 1.7), (20.0, 40.0), (0.5, 2), (0.5, 2.0)]
     f_bounds = [(75, 330), (0.5, 1), (8, 25), (1.3, 3.5), (0.5, 1.3), (20.0, 33.0), (0.5, 1.4), (0.5, 1.5)]
 
     def __init__(self, servidor_url, servidor_port, tamano_batch, iteraciones=100, device=torch.device('cpu')):
@@ -99,7 +100,7 @@ class PTServidorDataset(IterableDataset):
         params_dict = {}
         num_digits = len(str(num_records))
 
-        for i in range(1, num_records + 1):
+        for i in tqdm(range(1, num_records + 1)):
             waveform, params = self.obtener_datos_de_servidor()
             audio_file_name = f"{str(i).zfill(num_digits)}.wav"
             self.save_audio(waveform, os.path.join(output_dir, audio_file_name))
