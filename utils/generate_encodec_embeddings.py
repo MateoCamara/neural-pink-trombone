@@ -8,7 +8,13 @@ from tqdm import tqdm
 import scipy.io.wavfile as wavfile
 
 # Define the path for saving embeddings
-save_path = '~/pt_encodec'
+save_path = '~/pt_encodec_simplified'
+pt_dataset_path = '~/pt_dataset_simplified'
+
+save_path = os.path.expanduser(save_path)
+pt_dataset_path = os.path.expanduser(pt_dataset_path)
+
+
 os.makedirs(save_path, exist_ok=True)
 train_path = os.path.join(save_path, 'train')
 test_path = os.path.join(save_path, 'test')
@@ -24,8 +30,7 @@ def _load_codec_model(device):
     return model
 
 
-pt_dataset_path = '~/pt_dataset_simplified'
-pt_dataset_path = os.path.expanduser(pt_dataset_path)
+
 pt_dataset_train = os.path.join(pt_dataset_path, "train")
 pt_dataset_test = os.path.join(pt_dataset_path, "test")
 
