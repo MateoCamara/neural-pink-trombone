@@ -1,5 +1,7 @@
 import unittest
+import scipy.io.wavfile as wavfile
 
+import numpy as np
 import torch
 
 from data import PTServidorDataset, Tongue
@@ -63,6 +65,28 @@ class TestPTServidorDataset(unittest.TestCase):
                                          servidor_port=3000,
                                          tamano_batch=1,
                                          iteraciones=1)
+
+    def test_generate_random_audio(self):
+        # Genera un audio aleatorio y verifica que sea un tensor de PyTorch
+        audio, _ = self.dataset.obtener_datos_de_servidor()
+
+        # listen to the audio
+
+        wavfile.write('test_files/test_static.wav', 48000, audio)
+
+    def test_generate_random_dynamic_audio(self):
+        dataset_dynamic = PTServidorDataset(servidor_url="127.0.0.1",
+                                         servidor_port=3000,
+                                         tamano_batch=1,
+                                         iteraciones=1,
+                                         number_of_changes=2)
+
+
+        audio, _ = dataset_dynamic.obtener_datos_de_servidor()
+
+        # save file as wav with scipy
+
+        wavfile.write('test_files/test_dynamic.wav', 48000, audio)
 
     def test_batch_generation(self):
         # Comprueba que los lotes generados tienen el tamaño correcto

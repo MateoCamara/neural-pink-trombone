@@ -15,11 +15,12 @@ class PTServidorDataset(IterableDataset):
     bounds = [(100, 100), (1, 1), (12, 29), (2.05, 3.5), (0.6, 1.7), (20.0, 40.0), (0.5, 2), (0.5, 2.0)]
     f_bounds = [(75, 330), (0.5, 1), (8, 25), (1.3, 3.5), (0.5, 1.3), (20.0, 33.0), (0.5, 1.4), (0.5, 1.5)]
 
-    def __init__(self, servidor_url, servidor_port, tamano_batch, iteraciones=100, device=torch.device('cpu')):
+    def __init__(self, servidor_url, servidor_port, tamano_batch, number_of_changes=1, iteraciones=100, device=torch.device('cpu')):
         super().__init__()
         self.servidor_url = servidor_url
         self.tamano_batch = tamano_batch
         self.servidor_port = servidor_port
+        self.number_of_changes = number_of_changes
         self.iteraciones = iteraciones
         self.device = device
 
@@ -56,25 +57,26 @@ class PTServidorDataset(IterableDataset):
         return mel_spec, random_values
 
     def obtener_datos_de_servidor(self):
-        random_values = np.array([random.uniform(min_bound, max_bound) for min_bound, max_bound in self.bounds])
+        random_values = np.array([np.random.uniform(min_bound, max_bound, size=self.number_of_changes).tolist() for min_bound, max_bound in self.bounds])
+
         if self.tongue:
-            self.tongue.set_random_diameter()
-            random_values[3] = self.tongue.diameter
-            self.tongue.set_random_index_based_on_diam()
-            random_values[2] = self.tongue.index
+            for i in range(self.number_of_changes):
+                self.tongue.set_random_diameter()
+                random_values[3, i] = self.tongue.diameter
+                self.tongue.set_random_index_based_on_diam()
+                random_values[2, i] = self.tongue.index
         json_params = self._convert_params_to_json(random_values, 1, 43)
         response = requests.post(f'http://{self.servidor_url}:{self.servidor_port}/pink-trombone', json=json_params)
         audio = self._process_received_audio(response, normalize=False)
         return audio, random_values
 
-    @staticmethod
-    def _convert_params_to_json(params, length, lip_index):
+    def _convert_params_to_json(self, params, length, lip_index):
         param_names = [
             'frequency', 'voiceness', 'tongue_index', 'tongue_diam',
             'lip_diam', 'constriction_index', 'constriction_diam', 'throat_diam', 'lip_index'
         ]
-        params_dict = {name: [value] for name, value in zip(param_names, params)}
-        params_dict['lip_index'] = [lip_index]
+        params_dict = {name: list(value) for name, value in zip(param_names, params)}
+        params_dict['lip_index'] = [lip_index] * self.number_of_changes
         params_dict['length'] = length
         return params_dict
 
