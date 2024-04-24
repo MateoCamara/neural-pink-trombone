@@ -24,9 +24,14 @@ def _load_codec_model(device):
     return model
 
 
-pt_dataset_path = '~/pt_dataset'
+pt_dataset_path = '~/pt_dataset_simplified'
+pt_dataset_path = os.path.expanduser(pt_dataset_path)
 pt_dataset_train = os.path.join(pt_dataset_path, "train")
 pt_dataset_test = os.path.join(pt_dataset_path, "test")
+
+#create if doesn't exist
+os.makedirs(pt_dataset_train, exist_ok=True)
+os.makedirs(pt_dataset_test, exist_ok=True)
 
 
 def process_dataset(dataset_path, folder):
