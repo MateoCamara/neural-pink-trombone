@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 from torch.utils.data import IterableDataset
 import os
 import json
@@ -22,6 +23,8 @@ class PTServidorDataset(IterableDataset):
         self.iteraciones = iteraciones
         self.device = device
 
+        self.tongue = Tongue()  # cutre pero ok
+
     def __iter__(self):
         mel_spec_batch = np.empty((0, 1, 128, 94))  # Adjust the shape according to your data
         random_values_batch = np.empty((0, 8))  # Adjust the shape according to your data
@@ -36,7 +39,8 @@ class PTServidorDataset(IterableDataset):
 
             if len(mel_spec_batch) == self.tamano_batch:
                 yield (
-                torch.from_numpy(mel_spec_batch).to(self.device), torch.from_numpy(random_values_batch).to(self.device))
+                    torch.from_numpy(mel_spec_batch).to(self.device),
+                    torch.from_numpy(random_values_batch).to(self.device))
                 mel_spec_batch = np.empty((0, 1, 128, 94))  # Adjust the shape according to your data
                 random_values_batch = np.empty((0, 8))
 
@@ -53,6 +57,11 @@ class PTServidorDataset(IterableDataset):
 
     def obtener_datos_de_servidor(self):
         random_values = np.array([random.uniform(min_bound, max_bound) for min_bound, max_bound in self.bounds])
+        if self.tongue:
+            self.tongue.set_random_diameter()
+            random_values[3] = self.tongue.diameter
+            self.tongue.set_random_index_based_on_diam()
+            random_values[2] = self.tongue.index
         json_params = self._convert_params_to_json(random_values, 1, 43)
         response = requests.post(f'http://{self.servidor_url}:{self.servidor_port}/pink-trombone', json=json_params)
         audio = self._process_received_audio(response, normalize=False)
@@ -84,7 +93,7 @@ class PTServidorDataset(IterableDataset):
         """
         Calcula el espectrograma MEL de un audio dado.
         """
-        S = librosa.feature.melspectrogram(y=audio, sr=sr, fmax=fmax, n_mels=128,htk=True, norm=None)
+        S = librosa.feature.melspectrogram(y=audio, sr=sr, fmax=fmax, n_mels=128, htk=True, norm=None)
         if power:
             S_dB = librosa.power_to_db(S, ref=100)
             return S_dB
@@ -129,3 +138,71 @@ class PTServidorDataset(IterableDataset):
         print(min_max)
         return min_max
 
+
+class Tongue:
+
+    def __init__(self):
+        self.min_diam = 2.05
+        self.max_diam = 3.5
+
+        self.diam_range = self.max_diam - self.min_diam
+        self.diam_center = (self.max_diam + self.min_diam) / 2
+
+        self.min_index = 12
+        self.max_index = 29
+
+        self.index_range = self.max_index - self.min_index
+        self.index_center = (self.max_index + self.min_index) / 2
+
+    def get_diam_interpolation(self, diameter_value):
+        interpolation = (diameter_value - self.min_diam) / self.diam_range
+        return np.clip(interpolation, 0, 1)
+
+    def get_index_center_offset(self, interpolation):
+        center_offset_diam = interpolation * self.index_range
+        center_offset_radius = center_offset_diam / 2
+        return center_offset_radius
+
+    def set_diameter(self, diameter):
+        self.diameter = diameter
+
+    def set_index(self, index):
+        self.index = index
+
+    def set_random_diameter(self):
+        self.diameter = random.uniform(self.min_diam, self.max_diam)
+
+
+    def get_index_range_based_on_diam(self):
+        diam_interpolation = self.get_diam_interpolation(self.diameter)
+        inverted_diam_interpolation = 1 - diam_interpolation
+
+        straightened_interpolation = inverted_diam_interpolation ** 0.58 - 0.2 * (inverted_diam_interpolation ** 2 - inverted_diam_interpolation)
+        center_offset = self.get_index_center_offset(straightened_interpolation)
+
+        return self.index_center - center_offset, self.index_center + center_offset
+
+    def set_random_index_based_on_diam(self):
+        self.index = random.uniform(*self.get_index_range_based_on_diam())
+
+    def plot_tongue_positions(self):
+        diameters = np.linspace(self.min_diam, self.max_diam, 100)
+        index_ranges = []
+
+        for d in diameters:
+            self.set_diameter(d)
+            index_min, index_max = self.get_index_range_based_on_diam()
+            index_ranges.append((index_min, index_max))
+
+        index_mins, index_maxs = zip(*index_ranges)  # Descomprime las tuplas en dos listas separadas
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(diameters, index_mins, '-o', label='Minimum Index')
+        plt.plot(diameters, index_maxs, '-o', label='Maximum Index')
+        plt.fill_between(diameters, index_mins, index_maxs, color='gray', alpha=0.5, label='Index Range')
+        plt.title('Tongue Position Variability')
+        plt.xlabel('Diameter')
+        plt.ylabel('Index')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
