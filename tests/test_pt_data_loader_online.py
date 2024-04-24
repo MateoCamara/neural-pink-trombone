@@ -74,6 +74,26 @@ class TestPTServidorDataset(unittest.TestCase):
 
         wavfile.write('test_files/test_static.wav', 48000, audio)
 
+
+    def test_generate_specific_audio(self):
+        # Genera un audio aleatorio y verifica que sea un tensor de PyTorch
+        params = [140, 1, 20, 3.4, 1.7, 30, 2, 2]
+        params = [[i] for i in params]
+        audio = self.dataset.generate_specific_audio(params)
+
+        # listen to the audio
+
+        wavfile.write('test_files/test_specific.wav', 48000, audio)
+
+    def test_generate_specific_dynamic_audio(self):
+        # Genera un audio aleatorio y verifica que sea un tensor de PyTorch
+        params = [[140,140], [1,1], [20, 27.5], [3.4, 2.2], [1.7, 1.7], [30, 30], [2,2], [2,2]]
+        audio = self.dataset.generate_specific_audio(params)
+
+        # listen to the audio
+
+        wavfile.write('test_files/test_specific_dynamic.wav', 48000, audio)
+
     def test_generate_random_dynamic_audio(self):
         dataset_dynamic = PTServidorDataset(servidor_url="127.0.0.1",
                                          servidor_port=3000,

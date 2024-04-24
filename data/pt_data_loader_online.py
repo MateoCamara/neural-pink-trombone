@@ -56,6 +56,12 @@ class PTServidorDataset(IterableDataset):
         mel_spec = mel_spec[np.newaxis, :]
         return mel_spec, random_values
 
+    def generate_specific_audio(self, params):
+        json_params = self._convert_params_to_json(params, 1, 43)
+        response = requests.post(f'http://{self.servidor_url}:{self.servidor_port}/pink-trombone', json=json_params)
+        audio = self._process_received_audio(response, normalize=False)
+        return audio
+
     def obtener_datos_de_servidor(self):
         random_values = np.array([np.random.uniform(min_bound, max_bound, size=self.number_of_changes).tolist() for min_bound, max_bound in self.bounds])
 
