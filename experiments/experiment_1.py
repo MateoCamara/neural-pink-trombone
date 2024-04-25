@@ -10,7 +10,8 @@ class Experiment1(BaseExperiment):
         super().__init__(vae_model, config)
 
     def training_step(self, batch, batch_idx):
-        x, params = batch
+        x, params, waveform = batch
+        params = params[:, :, 0]
         y_hat = self.forward(x, params=params)
 
         train_loss = self.model.loss_function(*y_hat,
@@ -24,7 +25,8 @@ class Experiment1(BaseExperiment):
         return train_loss['loss']
 
     def validation_step(self, batch, batch_idx):
-        x, params = batch
+        x, params, waveform = batch
+        params = params[:, :, 0]
         y_hat = self.forward(x, params=params)
 
         val_loss = self.model.loss_function(*y_hat,

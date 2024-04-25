@@ -8,17 +8,22 @@ import librosa
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
+from utils import utils
+
 
 class SpectrogramDataloader(Dataset):
-    bounds = [(75, 330), (0.5, 1), (12, 29), (2.05, 3.5), (0.6, 1.7), (20.0, 40.0), (0.5, 2), (0.5, 2.0)]
-    min_spec_value = -65
-    max_spec_value = 45
-    def __init__(self, audio_dir, json_file):
+    bounds = utils.bounds
+    min_spec_value = utils.min_spec_value
+    max_spec_value = utils.max_spec_value
+
+    def __init__(self, audio_dir, json_file, **kwargs):
         self.audio_dir = audio_dir
 
         # Carga los metadatos desde el archivo JSON
         with open(json_file, 'r') as f:
             self.metadata = json.load(f)
+
+        self.metadata = {k: v[2:] for k, v in self.metadata.items() if v is not None}
 
         # Crea una lista de los nombres de archivo (claves del JSON)
         self.audio_files = list(self.metadata.keys())
@@ -40,7 +45,7 @@ class SpectrogramDataloader(Dataset):
         parameters = self.normalizar_params(parameters)
         parameters = torch.tensor(parameters).float()
 
-        return mel_spec, parameters
+        return mel_spec, parameters, waveform
 
     @staticmethod
     def _compute_mel_spectrogram(audio, sr, fmax, power=True):
@@ -49,12 +54,20 @@ class SpectrogramDataloader(Dataset):
         """
         spec_transform = torchaudio.transforms.MelSpectrogram(
             sample_rate=sr,
-            n_mels=128,
-            f_max=fmax,
             n_fft=2048,
+            win_length=2048,
+            hop_length=512,
+            f_min=0,
+            f_max=8000,
+            n_mels=128,
             window_fn=torch.hann_window,
-            hop_length=512
+            power=2.0,
+            normalized=False,
+            center=True,
+            pad_mode='reflect',
+            mel_scale='htk'  # Ensure mel scale is 'htk' for compatibility
         )
+
         S = spec_transform(audio)
 
         if power:
@@ -64,19 +77,25 @@ class SpectrogramDataloader(Dataset):
         else:
             return S
 
-    # def normalizar_mel_spec(self, mel_spec):
-    #     mel_spec = np.clip(mel_spec, self.min_spec_value, self.max_spec_value)
-    #     mel_spec = (mel_spec + ((self.min_spec_value + self.max_spec_value) / 2)) / ((self.max_spec_value - self.min_spec_value) / 2)
-    #     return mel_spec
-
     def normalizar_mel_spec(self, mel_spec):
         mel_spec = np.clip(mel_spec, self.min_spec_value, self.max_spec_value)
         mel_spec = (mel_spec - self.min_spec_value) / (self.max_spec_value - self.min_spec_value)
         return mel_spec
 
+    def denormalizar_mel_spec(self, mel_spec):
+        mel_spec = mel_spec * (self.max_spec_value - self.min_spec_value) + self.min_spec_value
+        return mel_spec
+
     def normalizar_params(self, params):
         for i, (low, high) in enumerate(self.bounds):
-            params[i] = (params[i] - low) / (high - low)
+            for j in range(len(params[i])):
+                params[i][j] = (params[i][j] - low) / (high - low)
+        return params
+
+    def denormalizar_params(self, params):
+        for i, (low, high) in enumerate(self.bounds):
+            for j in range(len(params[i])):
+                params[i][j] = params[i][j] * (high - low) + low
         return params
 
     def find_min_max_values(self):

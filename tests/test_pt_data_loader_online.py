@@ -6,6 +6,7 @@ import torch
 
 from data import PTServidorDataset, Tongue
 
+
 class TestTongue(unittest.TestCase):
 
     def setUp(self):
@@ -58,6 +59,7 @@ class TestTongue(unittest.TestCase):
         # Verificar que la función no arroja errores
         self.tongue.plot_tongue_positions()
 
+
 class TestPTServidorDataset(unittest.TestCase):
 
     def setUp(self):
@@ -74,7 +76,6 @@ class TestPTServidorDataset(unittest.TestCase):
 
         wavfile.write('test_files/test_static.wav', 48000, audio)
 
-
     def test_generate_specific_audio(self):
         # Genera un audio aleatorio y verifica que sea un tensor de PyTorch
         params = [140, 1, 20, 3.4, 1.7, 30, 2, 2]
@@ -87,7 +88,7 @@ class TestPTServidorDataset(unittest.TestCase):
 
     def test_generate_specific_dynamic_audio(self):
         # Genera un audio aleatorio y verifica que sea un tensor de PyTorch
-        params = [[140,140], [1,1], [20, 27.5], [3.4, 2.2], [1.7, 1.7], [30, 30], [2,2], [2,2]]
+        params = [[140, 140], [1, 1], [20, 27.5], [3.4, 2.2], [1.7, 1.7], [30, 30], [2, 2], [2, 2]]
         audio = self.dataset.generate_specific_audio(params)
 
         # listen to the audio
@@ -96,11 +97,10 @@ class TestPTServidorDataset(unittest.TestCase):
 
     def test_generate_random_dynamic_audio(self):
         dataset_dynamic = PTServidorDataset(servidor_url="127.0.0.1",
-                                         servidor_port=3000,
-                                         tamano_batch=1,
-                                         iteraciones=1,
-                                         number_of_changes=2)
-
+                                            servidor_port=3000,
+                                            tamano_batch=1,
+                                            iteraciones=1,
+                                            number_of_changes=2)
 
         audio, _ = dataset_dynamic.obtener_datos_de_servidor()
 

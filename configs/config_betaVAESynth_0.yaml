@@ -3,14 +3,15 @@ model_params:
   in_channels: 1
   latent_dim: 64
   beta: 4
-  beta_params: [1, 1, 1, 1, 1, 1, 1, 1]
+  beta_params: [1, 1, 1, 1, 1, 1]
   hidden_dims: [8, 16, 32, 64, 128]
+  num_synth_params: 6
 
 
 data_params:
-  data_path: "~/pt_dataset"
+  data_path: "../neural-pink-trombone-data/pt_dataset_simplified"
   data_type: "spectrogram"
-  num_workers: 31
+  num_workers: 12
   batch_size: 32
 
 
@@ -24,7 +25,7 @@ exp_params:
   patience: 100
 
 trainer_params:
-  devices: [ 1 ]
+  devices: [ 0 ]
   max_epochs: 1000
 
 logging_params:
