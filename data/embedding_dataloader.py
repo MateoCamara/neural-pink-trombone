@@ -1,3 +1,4 @@
+import copy
 import os
 import json
 
@@ -43,7 +44,7 @@ class EmbeddingDataloader(Dataset):
 
         # Obtiene los parámetros (etiquetas) asociados
 
-        parameters = self.metadata[self.audio_files[idx]]
+        parameters = copy.deepcopy(self.metadata[self.audio_files[idx]])
         parameters = self.normalizar_params(parameters)
         parameters = torch.tensor(parameters).float()
 

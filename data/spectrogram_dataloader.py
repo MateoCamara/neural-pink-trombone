@@ -7,6 +7,7 @@ import torch
 import librosa
 from torch.utils.data import Dataset
 from tqdm import tqdm
+import copy
 
 from utils import utils
 
@@ -40,8 +41,10 @@ class SpectrogramDataloader(Dataset):
         mel_spec = self._compute_mel_spectrogram(waveform, sample_rate, 8000, power=True)
         mel_spec = self.normalizar_mel_spec(mel_spec).float()
 
+        # raise error if mel spec has values below 0 or ab
+
         # Obtiene los parámetros (etiquetas) asociados
-        parameters = self.metadata[audio_name]
+        parameters = copy.deepcopy(self.metadata[audio_name])
         parameters = self.normalizar_params(parameters)
         parameters = torch.tensor(parameters).float()
 
