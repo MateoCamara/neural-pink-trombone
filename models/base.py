@@ -38,3 +38,25 @@ class BaseVAE(L.LightningModule):
         print(self.fc_var)
         print(self.decoder_input)
         print(self.decoder)
+
+
+class BaseMLP(L.LightningModule):
+
+    def __init__(self) -> None:
+        super(BaseMLP, self).__init__()
+
+    @abstractmethod
+    def forward(self, *inputs: Tensor) -> Tensor:
+        pass
+
+    @abstractmethod
+    def loss_function(self, *inputs: Any, **kwargs) -> Tensor:
+        pass
+
+    def print_neural_graph(self):
+        print(self.encoder)
+        print(self.encoder_output)
+        print(self.fc_mu)
+        print(self.fc_var)
+        print(self.decoder_input)
+        print(self.decoder)

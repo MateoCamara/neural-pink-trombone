@@ -75,6 +75,21 @@ class PTServidorDataset(IterableDataset):
         response = requests.post(f'http://{self.servidor_url}:{self.servidor_port}/pink-trombone', json=json_params)
         audio = self._process_received_audio(response, normalize=False)
         return audio, random_values
+    
+    def obtener_datos_de_servidor_param2loss(self, params):
+        params = np.array(params)
+
+        if self.tongue:
+            for i in range(self.number_of_changes):
+                self.tongue.set_random_diameter()
+                params[3, i] = self.tongue.diameter
+                self.tongue.set_random_index_based_on_diam()
+                params[2, i] = self.tongue.index
+        json_params = self._convert_params_to_json(params, 1, 43)
+        response = requests.post(f'http://{self.servidor_url}:{self.servidor_port}/pink-trombone', json=json_params)
+        audio = self._process_received_audio(response, normalize=False)
+        return audio, params
+
 
     def _convert_params_to_json(self, params, length, lip_index):
         param_names = [
@@ -125,6 +140,43 @@ class PTServidorDataset(IterableDataset):
 
         with open(os.path.join(output_dir, 'params.json'), 'w') as f:
             json.dump(params_dict, f)
+
+    def generate_records_param2loss(self, input_json_path, output_dir, num_records=10):
+        # Read all metadata (parameters & file names) from a .json file into a dict
+        with open(input_json_path, 'r') as f:
+            metadata_dict = json.load(f)
+        # PT generation loop
+        for audio_file_name, query_params in tqdm(metadata_dict.items()):
+            waveform, params = self.obtener_datos_de_servidor_param2loss(params=query_params)
+            self.save_audio(waveform, os.path.join(output_dir, audio_file_name))
+
+    def generate_corrupted_params(self, input_json_file, save_json_file):
+        # Read all metadata (parameters & file names) from a .json file into a dict
+        with open(input_json_file, 'r') as f:
+            metadata_dict = json.load(f)
+        # PT generation loop
+        param_noisy_dict = {}
+        for audio_file_name, query_params in tqdm(metadata_dict.items()):
+            # Params
+            noise_amount = 0.3
+            # Parameter bounds
+            bounds = [(100, 100), (1, 1), (12, 29), (2.05, 3.5), (0.6, 1.7), (20.0, 40.0), (0.5, 2), (0.5, 2.0)]
+            bounds = np.asarray(bounds)
+            # Widths and centers for uniferm noise (distribution parameters)
+            widths = bounds[:, 1]-bounds[:, 0]
+            centers = (bounds[:, 1]+bounds[:, 0]) / 2
+            # Generate noisy parameters
+            noise_widths = widths * noise_amount
+            noise_list = [[x] for x in 0.5*noise_widths*(np.random.uniform(size=(1, widths.shape[0]))*2 - 1)[0].tolist() ] 
+            params_noisy = [[query_params[i][0] + noise_list[i][0]] for i in range(len(query_params))]
+
+            # Save to param_noisy_dict
+            param_noisy_dict[audio_file_name] = params_noisy
+
+        # Save to save_json_file
+        with open(save_json_file, 'w') as f:
+            json.dump(param_noisy_dict, f)
+
 
     def save_audio(self, waveform, audio_file_path):
         sf.write(audio_file_path, waveform, 48000)
