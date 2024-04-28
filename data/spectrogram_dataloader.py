@@ -41,12 +41,17 @@ class SpectrogramDataloader(Dataset):
         mel_spec = self._compute_mel_spectrogram(waveform, sample_rate, 8000, power=True)
         mel_spec = self.normalizar_mel_spec(mel_spec).float()
 
-        # raise error if mel spec has values below 0 or ab
+        # raise error if mel spec has values below 0 or above 1
+        if mel_spec.min() < 0 or mel_spec.max() > 1:
+            raise ValueError(f"Mel spectrogram has values below 0 or above 1: {mel_spec.min()}, {mel_spec.max()}")
 
         # Obtiene los parámetros (etiquetas) asociados
         parameters = copy.deepcopy(self.metadata[audio_name])
         parameters = self.normalizar_params(parameters)
         parameters = torch.tensor(parameters).float()
+
+        if parameters.min() < 0 or parameters.max() > 1:
+            raise ValueError(f"Parameters have values below 0 or above 1: {parameters.min()}, {parameters.max()}")
 
         return mel_spec, parameters, waveform
 

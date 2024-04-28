@@ -175,8 +175,8 @@ class BetaVAESynth(BaseVAE):
 
         else:
             loss_params = []
-            for param_pred, param_true, self.beta_param in zip(params_pred, params_true, self.beta_params):
-                loss_params.append(F.mse_loss(param_pred, param_true, reduction='sum') * self.beta_param * self.params_weight)
+            for param_pred, param_true, beta_param in zip(params_pred, params_true, self.beta_params):
+                loss_params.append(F.mse_loss(param_pred, param_true, reduction='sum') * beta_param * self.params_weight)
 
             loss_params_dict = {f"{param_name}_error": loss for param_name, loss in zip(utils.utils.params_names, loss_params)}
 
