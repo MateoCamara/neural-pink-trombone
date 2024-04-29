@@ -4,8 +4,11 @@ import torchaudio
 from torch import nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
+from lightning.pytorch.loggers.tensorboard import TensorBoardLogger
 from typing import List, TypeVar
 import os
+import random
+import shutil
 import numpy as np
 import json
 
@@ -121,13 +124,15 @@ class Param2loss_MLP(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         true_MSE, params_vector = batch
         estimated_MSE = self.forward(params_vector)
-        loss = CustomLoss()(true_MSE, torch.squeeze(estimated_MSE))
-        self.log('train_loss', loss)
-        return loss
+        train_loss = CustomLoss()(true_MSE, torch.squeeze(estimated_MSE))
+        self.log_dict({key: val.item() for key, val in train_loss.items()}, sync_dist=True)
+
+        return train_loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
+
 
 
 ## MAIN ##
@@ -138,20 +143,29 @@ params_noisy_json_file = '/home/fmacias@gaps_domain.ssr.upm.es/AES_2024/neural-p
 wavs_dir = '/home/fmacias@gaps_domain.ssr.upm.es/AES_2024/neural-pink-trombone/param2loss/data_p2l/wavs'
 wavs_noisy_dir = '/home/fmacias@gaps_domain.ssr.upm.es/AES_2024/neural-pink-trombone/param2loss/data_p2l/wavs_noisy'
 
-# TODO
-# Split data in train, validation and test (different directories)
-
-
 # Load data
-train_dataset = CustomDataset(wavs_dir, wavs_noisy_dir, params_json_file, params_noisy_json_file)
+train_dataset = CustomDataset(os.path.join(wavs_dir,'train'), os.path.join(wavs_noisy_dir,'train'), params_json_file, params_noisy_json_file)
+test_dataset = CustomDataset(os.path.join(wavs_dir,'test'), os.path.join(wavs_noisy_dir,'test'), params_json_file, params_noisy_json_file)
+val_dataset = CustomDataset(os.path.join(wavs_dir,'val'), os.path.join(wavs_noisy_dir,'val'), params_json_file, params_noisy_json_file)
+
 train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=5)
+test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=True, num_workers=5)
+val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=True, num_workers=5)
+
+# Load TensorBoard logger
+logger_save_dir = "./logs/"
+logger_name = 'Param2Loss_1'
+tb_logger = TensorBoardLogger(save_dir=logger_save_dir,
+                              name=logger_name, )
+ 
 
 # Load model
 model = Param2loss_MLP()
-trainer = pl.Trainer(max_epochs=10)
+trainer = pl.Trainer(logger=tb_logger, max_epochs=1)
+
 
 # Launch training
-trainer.fit(model, train_dataloader)
+trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
 
 # Save model weights
 torch.save(model.state_dict(), f"./param2loss/nn_weights/model.pth")
