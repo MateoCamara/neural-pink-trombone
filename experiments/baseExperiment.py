@@ -27,6 +27,7 @@ class BaseExperiment(L.LightningModule):
     def training_step(self, batch, batch_idx):
         x = batch[0]
         params = batch[1]
+        params = params[:, :, 0]
         if len(batch) == 3:
             original_audio = batch[2]
         else:
@@ -46,6 +47,7 @@ class BaseExperiment(L.LightningModule):
     def validation_step(self, batch, batch_idx):
         x = batch[0]
         params = batch[1]
+        params = params[:, :, 0]
         if len(batch) == 3:
             original_audio = batch[2]
         else:
@@ -81,4 +83,14 @@ class BaseExperiment(L.LightningModule):
         optimizer = optim.Adam(self.model.parameters(),
                                lr=self.config['LR'],
                                weight_decay=self.config['weight_decay'])
-        return optimizer
+        reduce_on_plateau_scheduler = {
+            'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                mode='min',
+                factor=0.1,
+                patience=3,
+                verbose=True
+            ),
+            'monitor': 'val_loss'
+        }
+        return [optimizer], [reduce_on_plateau_scheduler]

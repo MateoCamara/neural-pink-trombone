@@ -14,13 +14,14 @@ class SynthStage(L.LightningModule):
     num_iter = 0  # Variable estática global para llevar la cuenta de las iteraciones
 
     def __init__(self, codec_dim: int, time_dim: int, hidden_dims: List = None, output_dims: int = None,
-                 beta_params: list = [], params_weight: int = 1, **kwargs):
+                 beta_params: list = [], params_weight: int = 1, num_synth_params: int = 8, **kwargs):
         super().__init__()
 
         self.codec_dim = codec_dim
         self.time_dim = time_dim
         self.beta_params = beta_params
         self.params_weight = params_weight
+        self.num_synth_params = num_synth_params
 
         if hidden_dims is None:
             hidden_dims = [codec_dim, codec_dim // 2, codec_dim // 4, codec_dim // 8]
@@ -59,9 +60,21 @@ class SynthStage(L.LightningModule):
             nn.Flatten(),
             nn.Linear(flat_size, flat_size // 2),
             nn.ReLU(),
-            nn.Linear(flat_size // 2, 8),
+            nn.Linear(flat_size // 2, self.num_synth_params),
             nn.Sigmoid()
         )
+        # flat_size = 19200
+        # self.synth_stage_final_layer = nn.Sequential(
+        #     nn.Flatten(),
+        #     nn.Linear(flat_size, flat_size // 2),
+        #     nn.ReLU(),
+        #     nn.Linear(flat_size // 2, flat_size // 4),
+        #     nn.ReLU(),
+        #     nn.Linear(flat_size // 4, flat_size // 8),
+        #     nn.ReLU(),
+        #     nn.Linear(flat_size // 8, self.num_synth_params),
+        #     nn.Sigmoid()
+        # )
 
     def forward(self, input: Tensor, params: Tensor, original_audio: Tensor = None):
         x = self.synth_stage(input)
@@ -87,17 +100,17 @@ class SynthStage(L.LightningModule):
 
         else:
             loss_params = []
-            for param_pred, param_true, self.beta_param in zip(params_pred, params_true, self.beta_params):
-                loss_params.append(F.mse_loss(param_pred, param_true, reduction='sum') * self.beta_param * self.params_weight)
+            for param_pred, param_true, beta_param in zip(params_pred.T, params_true.T, self.beta_params):
+                loss_params.append(F.mse_loss(param_pred, param_true, reduction='sum') * beta_param * self.params_weight)
 
-            loss_params_dict = {f"{param_name}_error": loss for param_name, loss in zip(utils.utils.params_names, loss_params)}
+            loss_params_dict = {f"{param_name}_error": loss / self.params_weight for param_name, loss in zip(utils.utils.params_names, loss_params)}
 
             params_loss = sum(loss_params)
             loss += params_loss
-            return_dict.update({'params_loss': params_loss})
+            return_dict.update({'params_loss': params_loss / self.params_weight})
             return_dict.update(loss_params_dict)
 
-        return_dict = {'loss': loss}
+        return_dict.update({'loss': loss})
 
         return return_dict
 

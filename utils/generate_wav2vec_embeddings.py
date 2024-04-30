@@ -8,14 +8,13 @@ import torch
 import torch
 import numpy as np
 import soundfile as sf
-from encodec import EncodecModel
 from tqdm import tqdm
 import scipy.io.wavfile as wavfile
 import librosa
 
 # Define the path for saving embeddings
-save_path = '~/pt_wav2vec_simplified'
-pt_dataset_path = '~/pt_dataset_simplified'
+save_path = '../../neural-pink-trombone-data/pt_wav2vec_simplified'
+pt_dataset_path = '../../neural-pink-trombone-data/pt_dataset_simplified'
 
 save_path = os.path.expanduser(save_path)
 pt_dataset_path = os.path.expanduser(pt_dataset_path)
@@ -27,22 +26,14 @@ os.makedirs(train_path, exist_ok=True)
 os.makedirs(test_path, exist_ok=True)
 
 
-def _load_wav2vec_model(device):
-    model = EncodecModel.encodec_model_24khz()
-    model.set_target_bandwidth(12.0)
-    model.eval()
-    model.to(device)
-    return model
-
-
-
-
 pt_dataset_train = os.path.join(pt_dataset_path, "train")
 pt_dataset_test = os.path.join(pt_dataset_path, "test")
 
 
 def process_dataset(dataset_path, folder):
     for audio_sample_name in tqdm(os.listdir(dataset_path)):
+        if os.path.exists(os.path.join(folder, f'{audio_sample_name.split(".wav")[0]}.pt')):
+            continue
         with torch.no_grad():
             audio_sample_path = os.path.join(dataset_path, audio_sample_name)
             audio_sample, _ = sf.read(audio_sample_path)
