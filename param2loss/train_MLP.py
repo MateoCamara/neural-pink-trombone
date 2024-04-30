@@ -79,7 +79,7 @@ class CustomLoss(torch.nn.Module):
 
     def forward(self, true_mse, estimated_mse):
         loss = F.mse_loss(true_mse, estimated_mse)
-        return loss
+        return {'MMSE loss': loss}
 
 class Param2loss_MLP(pl.LightningModule):
 
@@ -127,10 +127,18 @@ class Param2loss_MLP(pl.LightningModule):
         train_loss = CustomLoss()(true_MSE, torch.squeeze(estimated_MSE))
         self.log_dict({key: val.item() for key, val in train_loss.items()}, sync_dist=True)
 
-        return train_loss
+        return train_loss['MMSE loss']
+    
+    def validation_step(self, batch, batch_idx):
+        true_MSE, params_vector = batch
+        estimated_MSE = self.forward(params_vector)
+        val_loss = CustomLoss()(true_MSE, torch.squeeze(estimated_MSE))
+        self.log_dict({f"val_{key}": val.item() for key, val in val_loss.items()}, sync_dist=True)
+
+        return val_loss['MMSE loss']
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-4)
         return optimizer
 
 
@@ -149,8 +157,8 @@ test_dataset = CustomDataset(os.path.join(wavs_dir,'test'), os.path.join(wavs_no
 val_dataset = CustomDataset(os.path.join(wavs_dir,'val'), os.path.join(wavs_noisy_dir,'val'), params_json_file, params_noisy_json_file)
 
 train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=5)
-test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=True, num_workers=5)
-val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=True, num_workers=5)
+test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=5)
+val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=5)
 
 # Load TensorBoard logger
 logger_save_dir = "./logs/"
@@ -161,7 +169,7 @@ tb_logger = TensorBoardLogger(save_dir=logger_save_dir,
 
 # Load model
 model = Param2loss_MLP()
-trainer = pl.Trainer(logger=tb_logger, max_epochs=1)
+trainer = pl.Trainer(logger=tb_logger, max_epochs=10)
 
 
 # Launch training

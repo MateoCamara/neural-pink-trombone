@@ -20,8 +20,14 @@ def train_test_val_split(wavs_dir, wavs_noisy_dir):
     os.makedirs(test_dir_noisy, exist_ok=True)
 
     # List all files in the source directory
-    files = os.listdir(wavs_dir)
-    files_noisy = os.listdir(wavs_noisy_dir)
+    files = []
+    for i in os.listdir(wavs_dir):
+        if not os.path.isdir(os.path.join(wavs_dir,i)):
+            files.append(i)
+    files_noisy = []
+    for i in os.listdir(wavs_noisy_dir):
+        if not os.path.isdir(os.path.join(wavs_dir,i)):
+            files_noisy.append(i)
 
     # Shuffle the list of files
     random.shuffle(files)
