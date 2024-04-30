@@ -8,8 +8,8 @@ from tqdm import tqdm
 import scipy.io.wavfile as wavfile
 
 # Define the path for saving embeddings
-save_path = '~/pt_encodec_simplified'
-pt_dataset_path = '~/pt_dataset_simplified'
+save_path = '../../neural-pink-trombone-data/pt_encodec_simplified'
+pt_dataset_path = '../../neural-pink-trombone-data/pt_dataset_simplified'
 
 save_path = os.path.expanduser(save_path)
 pt_dataset_path = os.path.expanduser(pt_dataset_path)
@@ -41,6 +41,8 @@ os.makedirs(pt_dataset_test, exist_ok=True)
 
 def process_dataset(dataset_path, folder):
     for audio_sample_name in tqdm(os.listdir(dataset_path)):
+        if os.path.exists(os.path.join(folder, f'{audio_sample_name.split(".wav")[0]}.pt')):
+            continue
         audio_sample_path = os.path.join(dataset_path, audio_sample_name)
         audio_sample, _ = sf.read(audio_sample_path)
         # Process each sample
@@ -59,7 +61,7 @@ device = torch.device('cpu')
 model_encodec = _load_codec_model(device)
 
 # Process and save embeddings
-process_dataset(pt_dataset_train, train_path)
+# process_dataset(pt_dataset_train, train_path)
 process_dataset(pt_dataset_test, test_path)
 
 print("Embedding generation and saving completed.")
