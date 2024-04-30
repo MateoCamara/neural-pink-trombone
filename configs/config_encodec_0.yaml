@@ -3,23 +3,24 @@ model_params:
   in_channels: 1
   latent_dim: 64
   beta: 4
-  beta_params: [1, 1, 1, 1, 1, 1, 1, 1]
+  beta_params: [1, 1, 1, 1, 1, 1]
   hidden_dims: [8, 16, 32, 64, 128]
   codec_dim: 128
   time_dim: 150
+  num_synth_params: 6
 
 
 data_params:
-  data_path: "~/pt_encodec"
+  data_path: "../neural-pink-trombone-data/pt_encodec_simplified"
   data_type: "embedding"
   num_workers: 31
   batch_size: 32
-  patience: 10
+  patience: 100
 
 
 exp_params:
   name_exp: 'BaseExperiment'
-  LR: 0.005
+  LR: 0.001
   weight_decay: 0.0
   kld_weight: 0.000001
   params_weight: 1
@@ -28,7 +29,7 @@ exp_params:
 
 trainer_params:
   devices: [ 0 ]
-  max_epochs: 1000
+  max_epochs: 500
 
 logging_params:
   save_dir: "logs/"

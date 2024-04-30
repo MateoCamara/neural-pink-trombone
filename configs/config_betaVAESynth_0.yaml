@@ -11,22 +11,22 @@ model_params:
 data_params:
   data_path: "../neural-pink-trombone-data/pt_dataset_simplified"
   data_type: "spectrogram"
-  num_workers: 12
+  num_workers: 31
   batch_size: 32
 
 
 exp_params:
   name_exp: 'Experiment1'
-  LR: 0.005
+  LR: 0.001
   weight_decay: 0.0
-  kld_weight: 0.000001
+  kld_weight: 0.0
   params_weight: 1
   manual_seed: 1265
   patience: 100
 
 trainer_params:
   devices: [ 0 ]
-  max_epochs: 100
+  max_epochs: 500
 
 logging_params:
   save_dir: "logs/"

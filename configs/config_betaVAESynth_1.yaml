@@ -17,7 +17,7 @@ data_params:
 
 exp_params:
   name_exp: 'Experiment1'
-  LR: 0.005
+  LR: 0.001
   weight_decay: 0.0
   kld_weight: 0.000001
   params_weight: 10
@@ -26,7 +26,7 @@ exp_params:
 
 trainer_params:
   devices: [ 1 ]
-  max_epochs: 100
+  max_epochs: 500
 
 logging_params:
   save_dir: "logs/"
