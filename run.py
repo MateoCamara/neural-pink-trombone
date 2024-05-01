@@ -28,14 +28,18 @@ def load_experiment(exp_name, model, config):
 
 def load_dataloader(data_type):
     data_module = importlib.import_module("data")
+    json_file = ['train.json', 'test.json']
     if data_type == "spectrogram":
         data_class = getattr(data_module, "SpectrogramDataloader")
     elif data_type == "embedding":
         data_class = getattr(data_module, "EmbeddingDataloader")
+    elif data_type == "spectrogram_dynamic":
+        data_class = getattr(data_module, "DynamicSpectrogramDataloader")
+        json_file = ['train_interpolated.json', 'test_interpolated.json']
     else:
         raise ValueError(f"Data type {data_type} not recognized")
 
-    return data_class
+    return data_class, json_file
 
 def main():
     parser = argparse.ArgumentParser(description='Generic runner for VAE models')
@@ -43,7 +47,7 @@ def main():
                         dest="filename",
                         metavar='FILE',
                         help='path to the config file',
-                        default='./configs/config_betaVAESynth_0.yaml')
+                        default='./configs/config_betaVAESynth_dynamic_0.yaml')
 
     args = parser.parse_args()
 
@@ -61,10 +65,10 @@ def main():
     data_path = config['data_params']['data_path']
     data_path = os.path.expanduser(data_path)
 
-    dataset = load_dataloader(config['data_params']['data_type'])
+    dataset, json_file = load_dataloader(config['data_params']['data_type'])
 
-    train_dataset = dataset(os.path.join(data_path, "train"), os.path.join(data_path, "train.json"), **config['data_params'])
-    val_dataset = dataset(os.path.join(data_path, "test"), os.path.join(data_path, "test.json"), **config['data_params'])
+    train_dataset = dataset(os.path.join(data_path, "train"), os.path.join(data_path, json_file[0]), **config['data_params'])
+    val_dataset = dataset(os.path.join(data_path, "test"), os.path.join(data_path, json_file[1]), **config['data_params'])
 
     train_loader = DataLoader(train_dataset, batch_size=config['data_params']['batch_size'], shuffle=True, num_workers=config['data_params']['num_workers'], persistent_workers=True)
     val_loader = DataLoader(val_dataset, batch_size=config['data_params']['batch_size'], num_workers=config['data_params']['num_workers'], persistent_workers=True)

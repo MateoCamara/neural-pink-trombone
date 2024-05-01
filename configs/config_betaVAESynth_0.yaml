@@ -19,7 +19,7 @@ exp_params:
   name_exp: 'Experiment1'
   LR: 0.001
   weight_decay: 0.0
-  kld_weight: 0.0
+  kld_weight: 0.000001
   params_weight: 1
   manual_seed: 1265
   patience: 100

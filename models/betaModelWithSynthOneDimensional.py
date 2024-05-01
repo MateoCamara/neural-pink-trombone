@@ -36,11 +36,17 @@ class BetaVAESynth1D(BaseVAE):
 
         self.build_encoder(in_channels, hidden_dims)
         self.build_synth_stage(hidden_dims_synth_stage)
-        self.build_decoder(hidden_dims[::-1], in_channels)
+        self.build_decoder(hidden_dims[::-1], 1)
 
         self.print_neural_graph()
 
         self.use_pink_trombone = kwargs.get('use_pink_trombone', False)
+        self.use_previous_params_regularization = kwargs.get('use_previous_params_regularization', False)
+
+        if self.use_previous_params_regularization:
+            self.huber_delta = kwargs.get('huber_delta', 1.5)
+            self.beta_previous_params = kwargs.get('beta_previous_params', [1] * num_synth_params)
+            self.previous_params_weight = kwargs.get('previous_params_weight', 1.0)
 
         if self.use_pink_trombone:
             self.regen_weight = kwargs.get('regen_weight', 1.0)
@@ -69,7 +75,7 @@ class BetaVAESynth1D(BaseVAE):
 
     def prepare_latent_variables(self):
         """Prepara las variables latentes y las capas para mu y log_var."""
-        self.encoder_output_size = self.calculate_output_size(self.encoder, torch.randn(1, 1, 94))
+        self.encoder_output_size = self.calculate_output_size(self.encoder, torch.randn(1, 2, 128))
         flat_size = self.encoder_output_size.numel()
         self.encoder_output = nn.Sequential(
             nn.Flatten(),
@@ -154,10 +160,11 @@ class BetaVAESynth1D(BaseVAE):
         params_pred = args[4]
         params_true = args[5]
         kld_weight = kwargs['M_N']
+        previous_params = kwargs['previous_parameters']
 
         loss = 0
 
-        recons_loss = F.mse_loss(recons, input, reduction='sum')
+        recons_loss = F.mse_loss(recons[:, 0, :], input[:, 1, :], reduction='sum')
         loss += recons_loss
 
         kld_loss = torch.sum(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
@@ -185,6 +192,19 @@ class BetaVAESynth1D(BaseVAE):
             return_dict.update({'params_loss': params_loss / self.params_weight})
             return_dict.update(loss_params_dict)
 
+            if self.use_previous_params_regularization:
+                loss_prev_params = []
+                for param_pred, previous_param, beta_prev_param in zip(params_pred.T, previous_params.T, self.beta_previous_params):
+                    # loss_prev_params.append(F.huber_loss(param_pred, previous_param, delta=self.huber_delta, reduction='sum') * beta_prev_param * self.previous_params_weight)
+                    loss_prev_params.append(((param_pred - previous_param)**4) * beta_prev_param * self.previous_params_weight)
+
+
+                loss_prev_params_dict = {f"{param_name}_prev_error": loss / self.previous_params_weight for param_name, loss in zip(utils.utils.params_names, loss_prev_params)}
+
+                prev_params_loss = sum(loss_prev_params)
+                loss += prev_params_loss
+                return_dict.update({'prev_params_loss': prev_params_loss / self.previous_params_weight})
+                return_dict.update(loss_prev_params_dict)
 
         return_dict.update({'loss': loss})
 
