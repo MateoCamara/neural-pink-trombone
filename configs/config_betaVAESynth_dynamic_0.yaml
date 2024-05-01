@@ -1,0 +1,33 @@
+model_params:
+  name: 'BetaVAESynth1D'
+  in_channels: 1
+  latent_dim: 64
+  beta: 4
+  beta_params: [1, 1, 1, 1, 1, 1]
+  hidden_dims: [8, 16, 32, 64, 128]
+  num_synth_params: 6
+
+
+data_params:
+  data_path: "../neural-pink-trombone-data/pt_dataset_dynamic_simplified"
+  data_type: "spectrogram_dynamic"
+  num_workers: 31
+  batch_size: 32
+
+
+exp_params:
+  name_exp: 'Experiment2'
+  LR: 0.001
+  weight_decay: 0.0
+  kld_weight: 0.0
+  params_weight: 1
+  manual_seed: 1265
+  patience: 100
+
+trainer_params:
+  devices: [ 0 ]
+  max_epochs: 500
+
+logging_params:
+  save_dir: "logs/"
+  name: "betaVAESynth_dynamic"
