@@ -1,7 +1,10 @@
 import json
+import os
+
+path = '../../neural-pink-trombone-data/pt_dataset_dynamic_simplified_10changes'
 
 # Cargar el archivo JSON original
-with open('../../neural-pink-trombone-data/pt_dataset_dynamic_simplified/params.json', 'r') as file:
+with open(os.path.join(path, 'params.json'), 'r') as file:
     data = json.load(file)
 
 sorted_keys = sorted(data.keys())
@@ -15,9 +18,9 @@ train_data = {key: data[key] for key in train_keys}
 test_data = {key: data[key] for key in test_keys}
 
 # Guardar los datos de entrenamiento en train.json
-with open('../../neural-pink-trombone-data/pt_dataset_dynamic_simplified/train.json', 'w') as train_file:
+with open(os.path.join(path, 'train.json'), 'w') as train_file:
     json.dump(train_data, train_file, indent=4)  # Usar indentación para un formato más legible
 
 # Guardar los datos de prueba en test.json
-with open('../../neural-pink-trombone-data/pt_dataset_dynamic_simplified/test.json', 'w') as test_file:
+with open(os.path.join(path, 'test.json'), 'w') as test_file:
     json.dump(test_data, test_file, indent=4)
