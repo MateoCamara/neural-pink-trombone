@@ -39,6 +39,7 @@ class CustomDataset(Dataset):
         params_orig = np.concatenate(self.param_dict[os.path.split(self.audio_files_original[idx])[-1]])
         params_noisy = np.concatenate(self.param_dict_noisy[os.path.split(self.audio_files_original[idx])[-1]])
         params_vector = torch.from_numpy(np.concatenate((params_orig,params_noisy)))
+        # Normalizar params!!!!
 
         return true_MSE, params_vector
     
@@ -89,6 +90,12 @@ class Param2loss_MLP(pl.LightningModule):
         super(Param2loss_MLP, self).__init__()
         # Definición de variables internas
         self.out_channels = out_channels
+        self.network = None
+        self.total_train_loss = 0
+        self.total_val_loss = 0
+        self.denom_train = 0
+        self.denom_val = 0
+
         # Inicialización de dimensiones ocultas si no se proporcionan
         if hidden_dims is None:
             hidden_dims = [32, 16, 8, 4]
@@ -126,6 +133,8 @@ class Param2loss_MLP(pl.LightningModule):
         estimated_MSE = self.forward(params_vector)
         train_loss = CustomLoss()(true_MSE, torch.squeeze(estimated_MSE))
         self.log_dict({key: val.item() for key, val in train_loss.items()}, sync_dist=True)
+        self.total_train_loss += train_loss['MMSE loss']
+        self.denom_train += 1
 
         return train_loss['MMSE loss']
     
@@ -134,8 +143,18 @@ class Param2loss_MLP(pl.LightningModule):
         estimated_MSE = self.forward(params_vector)
         val_loss = CustomLoss()(true_MSE, torch.squeeze(estimated_MSE))
         self.log_dict({f"val_{key}": val.item() for key, val in val_loss.items()}, sync_dist=True)
+        self.total_val_loss += val_loss['MMSE loss']
+        self.denom_val += 1
 
         return val_loss['MMSE loss']
+    
+    def on_validation_epoch_end(self):
+        # Print the total losses for this epoch
+        if (self.denom_train == 0) or (self.denom_val == 0):
+            self.denom_train = 1
+            self.denom_val = 1
+        print(
+            f"Epoch {self.current_epoch}: Train Loss = {self.total_train_loss / self.denom_train}, Validation Loss = {self.total_val_loss / self.denom_val}")
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-4)
@@ -156,9 +175,9 @@ train_dataset = CustomDataset(os.path.join(wavs_dir,'train'), os.path.join(wavs_
 test_dataset = CustomDataset(os.path.join(wavs_dir,'test'), os.path.join(wavs_noisy_dir,'test'), params_json_file, params_noisy_json_file)
 val_dataset = CustomDataset(os.path.join(wavs_dir,'val'), os.path.join(wavs_noisy_dir,'val'), params_json_file, params_noisy_json_file)
 
-train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=5)
-test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=5)
-val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=5)
+train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=16)
+#test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=16)
+val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=16)
 
 # Load TensorBoard logger
 logger_save_dir = "./logs/"
