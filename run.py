@@ -36,6 +36,9 @@ def load_dataloader(data_type):
     elif data_type == "spectrogram_dynamic":
         data_class = getattr(data_module, "DynamicSpectrogramDataloader")
         json_file = ['train_interpolated.json', 'test_interpolated.json']
+    elif data_type == "embedding_dynamic":
+        data_class = getattr(data_module, "DynamicEmbeddingDataloader")
+        json_file = ['train_interpolated.json', 'test_interpolated.json']
     else:
         raise ValueError(f"Data type {data_type} not recognized")
 
@@ -47,7 +50,7 @@ def main():
                         dest="filename",
                         metavar='FILE',
                         help='path to the config file',
-                        default='./configs/config_betaVAESynth_dynamic_0.yaml')
+                        default='./configs/config_encodec_dynamic_0.yaml')
 
     args = parser.parse_args()
 
