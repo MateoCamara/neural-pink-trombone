@@ -1,12 +1,12 @@
 model_params:
-  name: 'SynthStage'
+  name: 'SynthStage1D'
   in_channels: 2
   latent_dim: 64
   beta: 4
   beta_params: [1, 1, 1, 1, 1, 1]
-  hidden_dims: [8, 16, 32, 64, 128]
-  codec_dim: 49
-  time_dim: 512
+  hidden_dims: [8, 16, 32]
+  codec_dim: 512 # TODO: ojo mucho cuidado con esto que está cambiado
+  time_dim: 49
   num_synth_params: 6
   use_previous_params_regularization: True
   huber_delta: 1.5
@@ -21,7 +21,7 @@ data_params:
   patience: 100
 
 exp_params:
-  name_exp: 'BaseExperiment'
+  name_exp: 'Experiment3'
   LR: 0.001
   weight_decay: 0.0
   kld_weight: 0.000001

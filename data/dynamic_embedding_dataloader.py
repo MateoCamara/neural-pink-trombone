@@ -27,6 +27,7 @@ class DynamicEmbeddingDataloader(Dataset):
             self.metadata = json.load(f)
 
         self.metadata = {k: v[2:] for k, v in self.metadata.items() if v is not None}
+        self.num_of_samples = len(self.metadata[list(self.metadata.keys())[0]][0])
 
         # Crea una lista de los nombres de archivo (claves del JSON)
         self.audio_files = list(self.metadata.keys())
@@ -39,9 +40,11 @@ class DynamicEmbeddingDataloader(Dataset):
         embbeding_name = file_name.split('.wav')[0] + '.pt'
         embbeding_path = os.path.join(self.embbedings_dir, embbeding_name)
 
+        random_index = np.random.randint(0, self.num_of_samples)
+
         # Carga embeddings
         # TODO: normalizar los embeddings?
-        embbeding = torch.load(embbeding_path)[0] # TODO: confirmar
+        embbeding = torch.load(embbeding_path)[0]
 
         if 'encodec' in embbeding_path:
             embbeding = embbeding.T # qué asco! pero bueno, es lo que hay
@@ -50,13 +53,23 @@ class DynamicEmbeddingDataloader(Dataset):
 
         # Obtiene los parámetros (etiquetas) asociados
 
-        parameters = copy.deepcopy(self.metadata[self.audio_files[idx]])
+        parameters = copy.deepcopy([i[random_index] for i in self.metadata[file_name]])
+        if random_index > 0:
+            previous_parameters = copy.deepcopy([i[random_index-1] for i in self.metadata[file_name]])
+            embbeding_interpolated = embbeding_interpolated[random_index-1:random_index+1, :]
+        else:
+            previous_parameters = copy.deepcopy(parameters)
+            # concatenate the first mel spectrogram with itself
+            embbeding_interpolated = torch.cat([embbeding_interpolated[0, :].unsqueeze(0)] * 2, dim=0)
+
         parameters = self.normalizar_params(parameters)
         parameters = torch.tensor(parameters).float()
 
+        previous_parameters = self.normalizar_params(previous_parameters)
+        previous_parameters = torch.tensor(previous_parameters).float()
+
         if parameters.min() < 0 or parameters.max() > 1:
             raise ValueError(f"Parameters have values below 0 or above 1: {parameters.min()}, {parameters.max()}")
-
 
         if self.audio_dir:
             audio_path = os.path.join(self.audio_dir, file_name)
@@ -69,20 +82,18 @@ class DynamicEmbeddingDataloader(Dataset):
             if mel_spec.min() < 0 or mel_spec.max() > 1:
                 raise ValueError(f"Mel spectrogram has values below 0 or above 1: {mel_spec.min()}, {mel_spec.max()}")
 
-            return embbeding, parameters, mel_spec, waveform
+            return embbeding, parameters, mel_spec, previous_parameters, waveform
 
-        return embbeding_interpolated, parameters
+        return embbeding_interpolated, parameters, previous_parameters
 
     def normalizar_params(self, params):
         for i, (low, high) in enumerate(self.bounds):
-            for j in range(len(params[i])):
-                params[i][j] = (params[i][j] - low) / (high - low)
+            params[i] = (params[i] - low) / (high - low)
         return params
 
     def denormalizar_params(self, params):
         for i, (low, high) in enumerate(self.bounds):
-            for j in range(len(params[i])):
-                params[i][j] = params[i][j] * (high - low) + low
+            params[i] = params[i] * (high - low) + low
         return params
 
     def _filter_files_in_metadata(self, files_dir):

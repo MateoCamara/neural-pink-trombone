@@ -88,7 +88,8 @@ class BaseExperiment(L.LightningModule):
                 optimizer,
                 mode='min',
                 factor=0.00001,
-                patience=3,
+                min_lr=1e-6,
+                patience=10,
                 verbose=True
             ),
             'monitor': 'val_loss'
