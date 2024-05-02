@@ -87,7 +87,7 @@ class BaseExperiment(L.LightningModule):
             'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(
                 optimizer,
                 mode='min',
-                factor=0.0001,
+                factor=0.00001,
                 patience=3,
                 verbose=True
             ),

@@ -196,7 +196,7 @@ class BetaVAESynth1D(BaseVAE):
                 loss_prev_params = []
                 for param_pred, previous_param, beta_prev_param in zip(params_pred.T, previous_params.T, self.beta_previous_params):
                     # loss_prev_params.append(F.huber_loss(param_pred, previous_param, delta=self.huber_delta, reduction='sum') * beta_prev_param * self.previous_params_weight)
-                    loss_prev_params.append(((param_pred - previous_param)**4) * beta_prev_param * self.previous_params_weight)
+                    loss_prev_params.append(sum((param_pred - previous_param)**4) * beta_prev_param * self.previous_params_weight)
 
 
                 loss_prev_params_dict = {f"{param_name}_prev_error": loss / self.previous_params_weight for param_name, loss in zip(utils.utils.params_names, loss_prev_params)}
