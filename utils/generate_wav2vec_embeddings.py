@@ -1,6 +1,6 @@
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from transformers import Wav2Vec2Model, Wav2Vec2FeatureExtractor
 import torch
@@ -13,8 +13,8 @@ import scipy.io.wavfile as wavfile
 import librosa
 
 # Define the path for saving embeddings
-save_path = '../../neural-pink-trombone-data/pt_wav2vec_simplified'
-pt_dataset_path = '../../neural-pink-trombone-data/pt_dataset_simplified'
+save_path = '../../neural-pink-trombone-data/pt_wav2vec_dynamic_simplified_10changes'
+pt_dataset_path = '../../neural-pink-trombone-data/pt_dataset_dynamic_simplified_10changes'
 
 save_path = os.path.expanduser(save_path)
 pt_dataset_path = os.path.expanduser(pt_dataset_path)
