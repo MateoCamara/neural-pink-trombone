@@ -78,7 +78,7 @@ class TestPTServidorDataset(unittest.TestCase):
 
     def test_generate_specific_audio(self):
         # Genera un audio aleatorio y verifica que sea un tensor de PyTorch
-        params = [140, 1, 20, 3.4, 1.7, 30, 2, 2]
+        params = [140, 1, 29, 2.05, 1.7, 30, 2, 2]
         params = [[i] for i in params]
         audio = self.dataset.generate_specific_audio(params)
 
@@ -88,8 +88,8 @@ class TestPTServidorDataset(unittest.TestCase):
 
     def test_generate_specific_dynamic_audio(self):
         # Genera un audio aleatorio y verifica que sea un tensor de PyTorch
-        params = [[140, 140], [1, 1], [20, 27.5], [3.4, 2.2], [1.7, 1.7], [30, 30], [2, 2], [2, 2]]
-        audio = self.dataset.generate_specific_audio(params)
+        params = [[140, 140, 140], [1, 1, 1], [29, 20.5, 12.5], [2.05, 3.4, 2.1], [1.7, 1.7, 1.7], [30, 30, 30], [2, 2, 2], [2, 2, 2]]
+        audio = self.dataset.generate_specific_audio(params, length=5)
 
         # listen to the audio
 

@@ -19,7 +19,7 @@ class TestInterpolation(unittest.TestCase):
 
     def test_multiple_value_multi_param_interpolation(self):
         """Testea la interpolación cuando cada parámetro tiene un único valor."""
-        param_list = [[0.5, 0.8], [1.0, 0.25]]
+        param_list = [[140, 140], [1, 1], [20, 27.5], [3.4, 2.2], [1.7, 1.7], [30, 30], [2, 2], [2, 2]]
         sampling_rate = 48000  # Hz
         audio_length = 1  # segundo
         expected_length = 94  # Calculado como int(48000 * 1 / 512 + 1)
