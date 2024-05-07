@@ -9,6 +9,7 @@ import librosa
 import torch
 import soundfile as sf
 from tqdm import tqdm
+from scipy.stats import lognorm
 
 
 class PTServidorDataset(IterableDataset):
@@ -56,8 +57,8 @@ class PTServidorDataset(IterableDataset):
         mel_spec = mel_spec[np.newaxis, :]
         return mel_spec, random_values
 
-    def generate_specific_audio(self, params):
-        json_params = self._convert_params_to_json(params, 1, 43)
+    def generate_specific_audio(self, params, length=1):
+        json_params = self._convert_params_to_json(params, length, 43)
         response = requests.post(f'http://{self.servidor_url}:{self.servidor_port}/pink-trombone', json=json_params)
         audio = self._process_received_audio(response, normalize=False)
         return audio
@@ -162,6 +163,12 @@ class Tongue:
         self.index_range = self.max_index - self.min_index
         self.index_center = (self.max_index + self.min_index) / 2
 
+        sigma = 0.25  # Este valor afecta la dispersión
+        mu = np.log(self.min_diam)  # Centramos la distribución en el logaritmo del mínimo
+
+        # Crear una distribución lognormal truncada
+        self.dist = lognorm(s=sigma, scale=np.exp(mu))
+
     def get_diam_interpolation(self, diameter_value):
         interpolation = (diameter_value - self.min_diam) / self.diam_range
         return np.clip(interpolation, 0, 1)
@@ -178,7 +185,11 @@ class Tongue:
         self.index = index
 
     def set_random_diameter(self):
-        self.diameter = random.uniform(self.min_diam, self.max_diam)
+        truncated_sample = None
+        while not truncated_sample:
+            sample = self.dist.rvs(1)
+            truncated_sample = sample[(sample >= self.min_diam) & (sample <= self.max_diam)]
+        self.diameter = truncated_sample[0]
 
 
     def get_index_range_based_on_diam(self):
