@@ -39,7 +39,7 @@ class CustomDataset(Dataset):
         params_orig = np.concatenate(self.param_dict[os.path.split(self.audio_files_original[idx])[-1]])
         params_noisy = np.concatenate(self.param_dict_noisy[os.path.split(self.audio_files_original[idx])[-1]])
         params_vector = torch.from_numpy(np.concatenate((params_orig,params_noisy)))
-        # Normalizar params!!!!
+        params_vector = self.normalizar_params(params_vector)
 
         return true_MSE, params_vector
     
@@ -75,6 +75,12 @@ class CustomDataset(Dataset):
         mel_spec = np.clip(mel_spec, -80, 0)
         mel_spec = (mel_spec + 80) / 80
         return mel_spec
+
+    def normalizar_params(self, params):
+        for i, (low, high) in enumerate(self.bounds):
+            for j in range(len(params[i])):
+                params[i][j] = (params[i][j] - low) / (high - low)
+        return params
 
 class CustomLoss(torch.nn.Module):
 
