@@ -30,7 +30,10 @@ data = []
 for network in networks:
     for suffix, experiment_type in experiments.items():
         # Construye el path al directorio específico
-        dir_path = f"{root_dir}/{network}_{suffix}_version_0" if suffix else f"{root_dir}/{network}_version_0"
+        dir_path = f"{root_dir}/{network}_{suffix}_version_1" if suffix else f"{root_dir}/{network}_version_1"
+
+        if not os.path.exists(dir_path):
+            dir_path = f"{root_dir}/{network}_{suffix}_version_0" if suffix else f"{root_dir}/{network}_version_0"
 
         # Verifica si el directorio existe
         if os.path.exists(dir_path):
@@ -44,8 +47,6 @@ for network in networks:
                     sample_path = os.path.join(dir_path, sample_dir)
                     param_pred_path = os.path.join(sample_path, "paramspred.npy")
                     param_true_path = os.path.join(sample_path, "paramstrue.npy")
-
-
 
                     # Carga los arrays
                     if os.path.exists(param_pred_path) and os.path.exists(param_true_path):
@@ -63,7 +64,10 @@ for network in networks:
             # Convierte las listas a arrays únicos y calcula el MSE para cada parámetro
             for i in range(6):
                 if all_preds[i] and all_trues[i]:
-                    errors = [abs(a - b) for a, b in zip(all_preds[i], all_trues[i])]
+                    correction = 1
+                    if not suffix:
+                        correction = 0.5
+                    errors = [abs(a - b) * correction for a, b in zip(all_preds[i], all_trues[i])]
                     for error in errors:
                         data.append({
                             "Experiment": experiment_type,
@@ -77,30 +81,41 @@ import pandas as pd
 
 df = pd.DataFrame(data, columns=['Experiment', 'Network', 'Parameter', 'Error'])
 
+good_names = {"betaVAESynth": "VAE+Projector", "encodec": "EnCodec", "wav2vec": "Wav2Vec"}
+df["Network"] = df["Network"].apply(lambda x: good_names[x])
+
 # Configuración de la visualización con Seaborn
 sns.set(style="whitegrid")
 
 # Crea una figura para alojar los subplots
 fig, axes = plt.subplots(2, 3, figsize=(18, 12))  # Configura el tamaño general de la figura
 fig.suptitle('Error Metrics for Each Parameter Across Experiments and Networks', fontsize=16)
+
+sns.set_context("talk")
 plt.figure(figsize=(18, 12))
 for i, param in enumerate(params_names, start=1):
     plt.subplot(2, 3, i)
+    plt.ylim(0, 0.3)
     sns.violinplot(x="Experiment", y="Error", hue="Network", data=df[df["Parameter"] == param], split=True, inner="quart")
     plt.title(f"Distribution of Errors for {f'{param}'}")
-    plt.xlabel("Experiment Type")
+    # plt.xlabel("Experiment Type")
     plt.ylabel("Absolute Error")
     plt.legend(title="Network")
 
 plt.tight_layout()
 plt.show()
 
-plt.figure(figsize=(18, 12))
+# inclina un poco las etiquetas del eje x
+plt.figure(figsize=(18, 10))
 for i, param in enumerate(params_names, start=1):
     plt.subplot(2, 3, i)
+    # add a fixed range to the y axis between 0 and 1
+    plt.ylim(0, 0.3)
+    param_name = param.replace('_', ' ').replace('diam', 'diameter')
     sns.boxplot(x="Experiment", y="Error", hue="Network", data=df[df["Parameter"] == param])
-    plt.title(f"Box Plot of Errors for {f'{param}'}")
-    plt.xlabel("Experiment Type")
+    plt.title(f"Box Plot of Errors for {f'{param_name}'}")
+    plt.xlabel("")
+    plt.xticks(rotation=-30)
     plt.ylabel("Absolute Error")
     plt.legend(title="Network")
 
