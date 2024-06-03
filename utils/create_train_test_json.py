@@ -1,7 +1,7 @@
 import json
 import os
 
-path = '../../neural-pink-trombone-data/pt_dataset_dynamic_simplified_10changes'
+path = '../../neural-pink-trombone-data/pt_dataset'
 
 # Cargar el archivo JSON original
 with open(os.path.join(path, 'params.json'), 'r') as file:
@@ -10,8 +10,8 @@ with open(os.path.join(path, 'params.json'), 'r') as file:
 sorted_keys = sorted(data.keys())
 
 # Dividir las claves en conjuntos de entrenamiento y prueba
-train_keys = sorted_keys[:80000]  # Primeras 80000 claves para entrenamiento
-test_keys = sorted_keys[80000:]   # Las siguientes 20000 claves para prueba
+train_keys = sorted_keys[:8000]  # Primeras 80000 claves para entrenamiento
+test_keys = sorted_keys[8000:]   # Las siguientes 20000 claves para prueba
 
 # Crear diccionarios para entrenamiento y prueba
 train_data = {key: data[key] for key in train_keys}
