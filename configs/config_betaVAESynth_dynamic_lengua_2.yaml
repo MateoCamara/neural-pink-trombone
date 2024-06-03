@@ -3,7 +3,7 @@ model_params:
   in_channels: 2
   latent_dim: 64
   beta: 4
-  beta_params: [1, 1, 1, 1, 1, 1]
+  beta_params: [40, 40, 1, 1, 1, 1]
   hidden_dims: [8, 16, 32, 64, 128]
   num_synth_params: 6
   use_previous_params_regularization: True
@@ -23,8 +23,8 @@ exp_params:
   LR: 0.001
   weight_decay: 0.0
   kld_weight: 0.000001
-  params_weight: 10
-  previous_params_weight: 10
+  params_weight: 1
+  previous_params_weight: 1
   manual_seed: 1265
   patience: 100
 
@@ -34,4 +34,4 @@ trainer_params:
 
 logging_params:
   save_dir: "logs/"
-  name: "betaVAESynth_dynamic"
+  name: "betaVAESynth_dynamic_lengua"

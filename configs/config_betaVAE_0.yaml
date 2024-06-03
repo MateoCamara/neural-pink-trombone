@@ -23,7 +23,7 @@ exp_params:
 
 trainer_params:
   devices: [ 0 ]
-  max_epochs: 500
+  max_epochs: 100
 
 logging_params:
   save_dir: "logs/"

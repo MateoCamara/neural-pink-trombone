@@ -3,22 +3,23 @@ model_params:
   in_channels: 2
   latent_dim: 64
   beta: 4
-  beta_params: [1, 1, 1, 1, 1, 1]
-  hidden_dims: [8, 16, 32]
-  codec_dim: 512 # TODO: ojo mucho cuidado con esto que está cambiado
-  time_dim: 49
+  beta_params: [40, 40, 1, 1, 1, 1]
+  hidden_dims: [8, 16, 32, 64]
+  codec_dim: 128
+  time_dim: 150
   num_synth_params: 6
   use_previous_params_regularization: True
   huber_delta: 1.5
-  beta_previous_params: [1, 1, 1, 1, 1, 1]
+  beta_previous_params: [ 1, 1, 1, 1, 1, 1 ]
 
 
 data_params:
-  data_path: "../neural-pink-trombone-data/pt_wav2vec_dynamic_simplified"
+  data_path: "../neural-pink-trombone-data/pt_encodec_dynamic_simplified"
   data_type: "embedding_dynamic"
   num_workers: 31
   batch_size: 32
   patience: 100
+
 
 exp_params:
   name_exp: 'Experiment3'
@@ -36,4 +37,4 @@ trainer_params:
 
 logging_params:
   save_dir: "logs/"
-  name: "Wav2vec_dynamic"
+  name: "Encodec_dynamic_lengua"

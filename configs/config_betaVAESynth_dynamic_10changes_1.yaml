@@ -12,7 +12,7 @@ model_params:
 
 
 data_params:
-  data_path: "../neural-pink-trombone-data/pt_dataset_dynamic_simplified"
+  data_path: "../neural-pink-trombone-data/pt_dataset_dynamic_simplified_10changes"
   data_type: "spectrogram_dynamic"
   num_workers: 31
   batch_size: 32
@@ -34,4 +34,4 @@ trainer_params:
 
 logging_params:
   save_dir: "logs/"
-  name: "betaVAESynth_dynamic"
+  name: "betaVAESynth_dynamic_10changes"

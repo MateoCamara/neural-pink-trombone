@@ -29,8 +29,8 @@ exp_params:
   patience: 100
 
 trainer_params:
-  devices: [ 1 ]
-  max_epochs: 500
+  devices: [ 0 ]
+  max_epochs: 200
 
 logging_params:
   save_dir: "logs/"
