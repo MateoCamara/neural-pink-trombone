@@ -44,7 +44,9 @@ class DynamicEmbeddingDataloader(Dataset):
 
         # Carga embeddings
         # TODO: normalizar los embeddings?
-        embbeding = torch.load(embbeding_path)[0]
+        embbeding = torch.load(embbeding_path)
+        if len(embbeding.size()) == 3:
+            embbeding = embbeding[0]
 
         if 'encodec' in embbeding_path:
             embbeding = embbeding.T # qué asco! pero bueno, es lo que hay
@@ -171,6 +173,9 @@ class DynamicEmbeddingDataloader(Dataset):
 
     def interpolate_embeddings(self, embeddings, original_fps, target_fps=94):
         """Interpola los embeddings al número de pasos por segundo objetivo."""
+        if original_fps == target_fps:
+            return embeddings
+
         times_original = np.linspace(0, 1, original_fps)
         times_target = np.linspace(0, 1, target_fps)
 
