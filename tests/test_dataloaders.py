@@ -5,7 +5,7 @@ import librosa
 import torch
 from scipy.io import wavfile
 
-from data import EmbeddingDataloader, SpectrogramDataloader
+from data import EmbeddingDataloader, SpectrogramDataloader, DynamicEmbeddingDataloader
 
 
 class TestEmbeddingDataloaderWav2vec(unittest.TestCase):
@@ -150,6 +150,24 @@ class TestEmbeddingDataloaderEncodec(unittest.TestCase):
         # save audio with scipy
         wavfile.write('test_files/test_audio_encodec.wav', 48000, audio_arr)
 
+
+class TestDynamicEmbeddingDataloader(unittest.TestCase):  # TODO: sinceramente, esto habría que quitarlo en favor del otro
+
+    def setUp(self):
+        data_path = '../../neural-pink-trombone-data/pt_encodec_dynamic_simplified'
+        self.dataset = DynamicEmbeddingDataloader(os.path.join(data_path, 'train'),
+                                             os.path.join(data_path, 'train_interpolated.json')
+                                             )
+
+    def test_dataset_initialization_and_length(self):
+        self.assertIsInstance(self.dataset, SpectrogramDataloader)
+        self.assertEqual(len(self.dataset), len(self.dataset.metadata.keys()))
+
+    def test_get_item(self):
+        embbeding_interpolated, parameters, previous_parameters = self.dataset[0]  # Asumiendo que no usamos la parte de audio
+        self.assertIsInstance(embbeding_interpolated, torch.Tensor)
+        self.assertIsInstance(parameters, torch.Tensor)
+        self.assertIsInstance(previous_parameters, torch.Tensor)
 
 
 class TestSpectrogramDataloader(unittest.TestCase):  # TODO: sinceramente, esto habría que quitarlo en favor del otro
