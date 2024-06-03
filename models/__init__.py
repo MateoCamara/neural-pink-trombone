@@ -1,4 +1,5 @@
 from .betaModel import BetaVAE
+from .betaModelOneDimensional import BetaVAE1D
 from .betaModelWithSynth import BetaVAESynth
 from .betaModelWithSynthOneDimensional import BetaVAESynth1D
 from .base import BaseVAE
