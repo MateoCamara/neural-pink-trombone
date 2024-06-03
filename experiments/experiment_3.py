@@ -1,10 +1,6 @@
-import copy
 
-import torch
-from torch import Tensor
-from torchvision.utils import make_grid
+
 from experiments.baseExperiment import BaseExperiment
-from utils.interpolate_parameters import interpolate_params
 
 
 class Experiment3(BaseExperiment):
