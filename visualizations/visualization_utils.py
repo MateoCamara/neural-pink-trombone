@@ -1,6 +1,7 @@
 import importlib
 
 import librosa
+import torch
 
 from utils import utils
 
@@ -9,6 +10,12 @@ def load_model(model_name, config):
     models_module = importlib.import_module("models")
     model_class = getattr(models_module, model_name)
     return model_class(**config['model_params'], **config['exp_params'])
+
+def set_weights_to_model(model, state_dict_path, device='cpu'):
+    state_dict = torch.load(state_dict_path, map_location=torch.device(device))['state_dict']
+    fixed_state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
+    model.load_state_dict(fixed_state_dict)
+    return model
 
 def load_dataloader(data_type):
     data_module = importlib.import_module("data")
