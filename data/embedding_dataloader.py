@@ -1,3 +1,6 @@
+"""Dataset that serves pre-computed audio embeddings with their normalized
+Pink-Trombone parameters (and, optionally, the mel spectrogram and waveform)."""
+
 import copy
 import os
 import json
@@ -7,7 +10,6 @@ import torchaudio
 import torch
 import librosa
 from torch.utils.data import Dataset
-from tqdm import tqdm
 
 from utils import utils
 
@@ -27,7 +29,7 @@ class EmbeddingDataloader(Dataset):
 
         self.metadata = {k: v[2:] for k, v in self.metadata.items() if v is not None}
 
-        # Crea una lista de los nombres de archivo (claves del JSON)
+        # Build a list of file names (the JSON keys)
         self.audio_files = list(self.metadata.keys())
 
     def __len__(self):
@@ -38,11 +40,11 @@ class EmbeddingDataloader(Dataset):
         embbeding_name = file_name.split('.wav')[0] + '.pt'
         embbeding_path = os.path.join(self.embbedings_dir, embbeding_name)
 
-        # Carga embeddings
-        # TODO: normalizar los embeddings?
+        # Load embeddings
+        # TODO: normalize the embeddings?
         embbeding = torch.load(embbeding_path)
 
-        # Obtiene los parámetros (etiquetas) asociados
+        # Get the associated parameters (labels)
 
         parameters = copy.deepcopy(self.metadata[self.audio_files[idx]])
         parameters = self.normalizar_params(parameters)
@@ -86,7 +88,7 @@ class EmbeddingDataloader(Dataset):
     @staticmethod
     def _compute_mel_spectrogram(audio, sr, fmax, power=True):
         """
-        Calcula el espectrograma MEL de un audio dado.
+        Compute the MEL spectrogram of a given audio signal.
         """
         spec_transform = torchaudio.transforms.MelSpectrogram(
             sample_rate=sr,
@@ -135,7 +137,7 @@ class EmbeddingDataloader(Dataset):
             center=True,
             pad_mode='reflect',
             power=2.0,
-            n_iter=32,  # Número de iteraciones para Griffin-Lim
+            n_iter=32,  # Number of Griffin-Lim iterations
             htk=True,
             fmin=0,
             fmax=8000

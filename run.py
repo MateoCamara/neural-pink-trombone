@@ -1,3 +1,13 @@
+"""Generic training runner for the VAE models.
+
+Reads a YAML config, builds the model, experiment (PyTorch Lightning module) and
+train/validation dataloaders by name, and runs the Lightning training loop with
+TensorBoard logging, checkpointing and early stopping.
+
+Usage:
+    python run.py --config ./configs/config_encodec_dynamic_0.yaml
+"""
+
 import importlib
 import os
 
@@ -98,4 +108,4 @@ def main():
     runner.fit(experiment, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
 if __name__ == '__main__':
-    main() # aparentemente esto es necesario para windows
+    main()  # apparently this is necessary on Windows (multiprocessing workers)

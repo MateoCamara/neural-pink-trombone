@@ -1,3 +1,6 @@
+"""Dataset that computes mel spectrograms from audio files on the fly and serves
+them with their normalized Pink-Trombone parameters and the raw waveform."""
+
 import os
 import json
 
@@ -20,13 +23,13 @@ class SpectrogramDataloader(Dataset):
     def __init__(self, audio_dir, json_file, **kwargs):
         self.audio_dir = audio_dir
 
-        # Carga los metadatos desde el archivo JSON
+        # Load the metadata from the JSON file
         with open(json_file, 'r') as f:
             self.metadata = json.load(f)
 
         self.metadata = {k: v[2:] for k, v in self.metadata.items() if v is not None}
 
-        # Crea una lista de los nombres de archivo (claves del JSON)
+        # Build a list of file names (the JSON keys)
         self.audio_files = list(self.metadata.keys())
 
     def __len__(self):
@@ -36,7 +39,7 @@ class SpectrogramDataloader(Dataset):
         audio_name = self.audio_files[idx]
         audio_path = os.path.join(self.audio_dir, audio_name)
 
-        # Carga el archivo de audio
+        # Load the audio file
         waveform, sample_rate = torchaudio.load(audio_path)
         mel_spec = self._compute_mel_spectrogram(waveform, sample_rate, 8000, power=True)
         mel_spec = self.normalizar_mel_spec(mel_spec).float()
@@ -45,7 +48,7 @@ class SpectrogramDataloader(Dataset):
         if mel_spec.min() < 0 or mel_spec.max() > 1:
             raise ValueError(f"Mel spectrogram has values below 0 or above 1: {mel_spec.min()}, {mel_spec.max()}")
 
-        # Obtiene los parámetros (etiquetas) asociados
+        # Get the associated parameters (labels)
         parameters = copy.deepcopy(self.metadata[audio_name])
         parameters = self.normalizar_params(parameters)
         parameters = torch.tensor(parameters).float()
@@ -58,7 +61,7 @@ class SpectrogramDataloader(Dataset):
     @staticmethod
     def _compute_mel_spectrogram(audio, sr, fmax, power=True):
         """
-        Calcula el espectrograma MEL de un audio dado.
+        Compute the MEL spectrogram of a given audio signal.
         """
         spec_transform = torchaudio.transforms.MelSpectrogram(
             sample_rate=sr,
@@ -117,7 +120,7 @@ class SpectrogramDataloader(Dataset):
 
             audio_path = os.path.join(self.audio_dir, audio_name)
 
-            # Carga el archivo de audio
+            # Load the audio file
             waveform, sample_rate = torchaudio.load(audio_path)
             mel_spec = self._compute_mel_spectrogram(waveform, sample_rate, 8000, power=True)
 

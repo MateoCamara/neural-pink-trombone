@@ -1,3 +1,8 @@
+"""Dynamic variant of the embedding dataset: serves a single time step (sampled
+at random) together with its previous step, slerp-interpolating the embedding
+sequence to a fixed frame rate. Used by the dynamic ("changes over time")
+experiments."""
+
 import copy
 import os
 import json
@@ -7,8 +12,6 @@ import torchaudio
 import torch
 import librosa
 from torch.utils.data import Dataset
-from tqdm import tqdm
-from scipy.spatial.transform import Rotation as R
 
 from utils import utils
 
@@ -29,7 +32,7 @@ class DynamicEmbeddingDataloader(Dataset):
         self.metadata = {k: v[2:] for k, v in self.metadata.items() if v is not None}
         self.num_of_samples = len(self.metadata[list(self.metadata.keys())[0]][0])
 
-        # Crea una lista de los nombres de archivo (claves del JSON)
+        # Build a list of file names (the JSON keys)
         self.audio_files = list(self.metadata.keys())
 
     def __len__(self):
@@ -42,18 +45,18 @@ class DynamicEmbeddingDataloader(Dataset):
 
         random_index = np.random.randint(0, self.num_of_samples)
 
-        # Carga embeddings
-        # TODO: normalizar los embeddings?
+        # Load embeddings
+        # TODO: normalize the embeddings?
         embbeding = torch.load(embbeding_path)
         if len(embbeding.size()) == 3:
             embbeding = embbeding[0]
 
         if 'encodec' in embbeding_path:
-            embbeding = embbeding.T # qué asco! pero bueno, es lo que hay
+            embbeding = embbeding.T  # ugly, but it is what it is
 
         embbeding_interpolated = torch.tensor(self.interpolate_embeddings(embbeding, original_fps=embbeding.shape[0])).float()
 
-        # Obtiene los parámetros (etiquetas) asociados
+        # Get the associated parameters (labels)
 
         parameters = copy.deepcopy([i[random_index] for i in self.metadata[file_name]])
         if random_index > 0:
@@ -105,7 +108,7 @@ class DynamicEmbeddingDataloader(Dataset):
     @staticmethod
     def _compute_mel_spectrogram(audio, sr, fmax, power=True):
         """
-        Calcula el espectrograma MEL de un audio dado.
+        Compute the MEL spectrogram of a given audio signal.
         """
         spec_transform = torchaudio.transforms.MelSpectrogram(
             sample_rate=sr,
@@ -154,7 +157,7 @@ class DynamicEmbeddingDataloader(Dataset):
             center=True,
             pad_mode='reflect',
             power=2.0,
-            n_iter=32,  # Número de iteraciones para Griffin-Lim
+            n_iter=32,  # Number of Griffin-Lim iterations
             htk=True,
             fmin=0,
             fmax=8000
@@ -162,7 +165,7 @@ class DynamicEmbeddingDataloader(Dataset):
         return audio_reconstructed
 
     def slerp(self, p0, p1, t):
-        """Interpola esféricamente entre dos puntos p0 y p1 usando el factor t."""
+        """Spherically interpolate between points p0 and p1 using factor t."""
         omega = np.arccos(np.clip(np.dot(p0 / np.linalg.norm(p0), p1 / np.linalg.norm(p1)), -1, 1))
         sin_omega = np.sin(omega)
         if sin_omega == 0:
@@ -172,32 +175,32 @@ class DynamicEmbeddingDataloader(Dataset):
             return np.sin((1.0 - t) * omega) / sin_omega * p0 + np.sin(t * omega) / sin_omega * p1
 
     def interpolate_embeddings(self, embeddings, original_fps, target_fps=94):
-        """Interpola los embeddings al número de pasos por segundo objetivo."""
+        """Interpolate the embeddings to the target number of steps per second."""
         if original_fps == target_fps:
             return embeddings
 
         times_original = np.linspace(0, 1, original_fps)
         times_target = np.linspace(0, 1, target_fps)
 
-        # Inicializa la lista de embeddings interpolados
+        # Initialize the list of interpolated embeddings
         interpolated_embeddings = np.zeros((target_fps, embeddings.shape[1]))
 
-        # Calcula interpolaciones para cada paso de tiempo en el objetivo
+        # Compute an interpolation for each target time step
         for i in range(target_fps):
-            # Encuentra los índices de los puntos originalmente más cercanos
+            # Find the indices of the nearest original points
             idx = np.searchsorted(times_original, times_target[i]) - 1
             idx_next = min(idx + 1, original_fps - 1)
 
-            # Calcula el factor de interpolación
+            # Compute the interpolation factor
             t = (times_target[i] - times_original[idx]) / (times_original[idx_next] - times_original[idx])
 
-            # Interpola esféricamente entre los dos puntos más cercanos
+            # Spherically interpolate between the two nearest points
             interpolated_embeddings[i] = self.slerp(embeddings[idx], embeddings[idx_next], t)
 
         return interpolated_embeddings
 
-    # Ejemplo de uso:
-    # Supongamos que `embeddings_wav2vec` es un array de numpy con los embeddings de wav2vec
-    # embeddings_wav2vec = np.random.rand(49, 128)  # 49 pasos, embeddings de 128 dimensiones
+    # Example usage:
+    # Suppose `embeddings_wav2vec` is a numpy array with the wav2vec embeddings
+    # embeddings_wav2vec = np.random.rand(49, 128)  # 49 steps, 128-dim embeddings
     # interpolated = interpolate_embeddings(embeddings_wav2vec, original_fps=49)
 

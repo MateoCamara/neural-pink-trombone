@@ -1,3 +1,13 @@
+"""Online dataset that generates training data on the fly by querying a running
+Pink Trombone server.
+
+For each sample it draws random vocal-tract parameters (the tongue index/diameter
+are sampled jointly by the ``Tongue`` helper), POSTs them to the ``/pink-trombone``
+endpoint, receives the synthesized waveform, and computes its mel spectrogram.
+(Spanish identifiers such as ``servidor_url`` / ``tamano_batch`` are kept for
+backward compatibility with existing call sites.)
+"""
+
 from matplotlib import pyplot as plt
 from torch.utils.data import IterableDataset
 import os
@@ -13,6 +23,8 @@ from scipy.stats import lognorm
 
 
 class PTServidorDataset(IterableDataset):
+    """Iterable dataset streaming (mel_spec, parameters) batches from the PT server."""
+
     bounds = [(100, 100), (1, 1), (12, 29), (2.05, 3.5), (0.6, 1.7), (20.0, 40.0), (0.5, 2), (0.5, 2.0)]
     f_bounds = [(75, 330), (0.5, 1), (8, 25), (1.3, 3.5), (0.5, 1.3), (20.0, 33.0), (0.5, 1.4), (0.5, 1.5)]
 
@@ -25,14 +37,14 @@ class PTServidorDataset(IterableDataset):
         self.iteraciones = iteraciones
         self.device = device
 
-        self.tongue = Tongue()  # cutre pero ok
+        self.tongue = Tongue()  # crude, but ok
 
     def __iter__(self):
         mel_spec_batch = np.empty((0, 1, 128, 94))  # Adjust the shape according to your data
         random_values_batch = np.empty((0, 8))  # Adjust the shape according to your data
         contador = 0
         while contador < self.iteraciones:
-            # Simula una llamada de servidor para obtener un dato.
+            # Simulate a server call to fetch one data point.
             mel_spec, random_values = self.generate_random_audio()
             mel_spec = self.normalizar_mel_spec(mel_spec)
             mel_spec_batch = np.concatenate((mel_spec_batch, mel_spec[np.newaxis, :]), axis=0)
@@ -91,7 +103,7 @@ class PTServidorDataset(IterableDataset):
     def _process_received_audio(response, normalize=False):
         waveform = np.array(list(response.json()['output'].values()))
         waveform = waveform[int(48_000 * 0.2):]  # Delete the warm up
-        waveform[waveform == None] = 0
+        waveform[waveform == None] = 0  # replace JSON null samples (elementwise '== None' on an object array)
         waveform = waveform.astype(np.float64)
         if normalize:
             waveform = librosa.util.normalize(waveform)
@@ -100,7 +112,7 @@ class PTServidorDataset(IterableDataset):
     @staticmethod
     def _compute_mel_spectrogram(audio, sr, fmax, power=True):
         """
-        Calcula el espectrograma MEL de un audio dado.
+        Compute the MEL spectrogram of a given audio signal.
         """
         S = librosa.feature.melspectrogram(y=audio, sr=sr, fmax=fmax, n_mels=128, htk=True, norm=None)
         if power:
@@ -149,6 +161,11 @@ class PTServidorDataset(IterableDataset):
 
 
 class Tongue:
+    """Samples a physiologically plausible tongue (index, diameter) pair.
+
+    The diameter is drawn from a truncated log-normal distribution; the index
+    range is then derived from the diameter so the two stay consistent.
+    """
 
     def __init__(self):
         self.min_diam = 2.05
@@ -163,10 +180,10 @@ class Tongue:
         self.index_range = self.max_index - self.min_index
         self.index_center = (self.max_index + self.min_index) / 2
 
-        sigma = 0.25  # Este valor afecta la dispersión
-        mu = np.log(self.min_diam)  # Centramos la distribución en el logaritmo del mínimo
+        sigma = 0.25  # This value controls the spread
+        mu = np.log(self.min_diam)  # Center the distribution on the log of the minimum
 
-        # Crear una distribución lognormal truncada
+        # Create a truncated log-normal distribution
         self.dist = lognorm(s=sigma, scale=np.exp(mu))
 
     def get_diam_interpolation(self, diameter_value):
@@ -213,7 +230,7 @@ class Tongue:
             index_min, index_max = self.get_index_range_based_on_diam()
             index_ranges.append((index_min, index_max))
 
-        index_mins, index_maxs = zip(*index_ranges)  # Descomprime las tuplas en dos listas separadas
+        index_mins, index_maxs = zip(*index_ranges)  # Unzip the tuples into two separate lists
 
         plt.figure(figsize=(10, 6))
         plt.plot(diameters, index_mins, '-o', label='Minimum Index')

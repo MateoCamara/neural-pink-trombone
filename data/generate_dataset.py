@@ -1,3 +1,6 @@
+"""Script: generate an offline dataset of audio/parameter records by querying a
+running Pink Trombone server. Run from inside the ``data/`` directory."""
+
 from pt_data_loader_online import PTServidorDataset
 
 # dataset = PTServidorDataset(servidor_url='127.0.0.1', servidor_port=3000, tamano_batch=1, iteraciones=1)

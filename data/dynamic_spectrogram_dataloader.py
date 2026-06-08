@@ -1,3 +1,7 @@
+"""Dynamic variant of the spectrogram dataset: serves a single time step (sampled
+at random) together with its previous step from the mel-spectrogram sequence.
+Used by the dynamic ("changes over time") experiments."""
+
 import os
 import json
 
@@ -20,20 +24,14 @@ class DynamicSpectrogramDataloader(Dataset):
     def __init__(self, audio_dir, json_file, **kwargs):
         self.audio_dir = audio_dir
 
-        # Carga los metadatos desde el archivo JSON
+        # Load the metadata from the JSON file
         with open(json_file, 'r') as f:
             self.metadata = json.load(f)
 
         self.metadata = {k: v[2:] for k, v in self.metadata.items() if v is not None}
         self.num_of_samples = len(self.metadata[list(self.metadata.keys())[0]][0])
-        # import random
-        # claves_aleatorias = random.sample(list(self.metadata.keys()), 5)
-        # self.metadata = {clave: self.metadata[clave] for clave in claves_aleatorias}
-        #
-        # # get only the first two items of each sample:
-        # self.metadata = {k: [sublista[:2] for sublista in v] for k, v in self.metadata.items()}
 
-        # Crea una lista de los nombres de archivo (claves del JSON)
+        # Build a list of file names (the JSON keys)
         self.audio_files = list(self.metadata.keys())
 
     def __len__(self):
@@ -43,7 +41,7 @@ class DynamicSpectrogramDataloader(Dataset):
         audio_name = self.audio_files[idx]
         audio_path = os.path.join(self.audio_dir, audio_name)
 
-        # Carga el archivo de audio
+        # Load the audio file
         waveform, sample_rate = torchaudio.load(audio_path)
         mel_spec = self._compute_mel_spectrogram(waveform, sample_rate, 8000, power=True)
         mel_spec = self.normalizar_mel_spec(mel_spec).float()
@@ -83,7 +81,7 @@ class DynamicSpectrogramDataloader(Dataset):
     @staticmethod
     def _compute_mel_spectrogram(audio, sr, fmax, power=True):
         """
-        Calcula el espectrograma MEL de un audio dado.
+        Compute the MEL spectrogram of a given audio signal.
         """
         spec_transform = torchaudio.transforms.MelSpectrogram(
             sample_rate=sr,
@@ -140,7 +138,7 @@ class DynamicSpectrogramDataloader(Dataset):
 
             audio_path = os.path.join(self.audio_dir, audio_name)
 
-            # Carga el archivo de audio
+            # Load the audio file
             waveform, sample_rate = torchaudio.load(audio_path)
             mel_spec = self._compute_mel_spectrogram(waveform, sample_rate, 8000, power=True)
 
