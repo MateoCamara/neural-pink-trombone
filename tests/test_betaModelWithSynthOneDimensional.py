@@ -1,25 +1,25 @@
 import unittest
 import torch
-from models import BetaVAESynth1D  # Asegúrate de importar correctamente tu clase
+from models import BetaVAESynth1D  # make sure to import the class correctly
 
 class TestBetaVAESynth1D(unittest.TestCase):
     def test_encoder_decoder_symmetry(self):
-        """Verifica que cada capa del encoder y su correspondiente en el decoder tengan el mismo tamaño de salida."""
-        in_channels = 1  # Define según tus necesidades de canal de entrada
-        latent_dim = 64  # Dimension latente que esperas utilizar
-        hidden_dims = [8, 16]  # Dimensiones ocultas para el encoder y decoder
-        betaVAE = BetaVAESynth1D(in_channels, latent_dim, hidden_dims)  # Inicializa tu modelo
+        """Check that each encoder layer and its decoder counterpart have the same output size."""
+        in_channels = 1  # Define according to your input-channel needs
+        latent_dim = 64  # Latent dimension you expect to use
+        hidden_dims = [8, 16]  # Hidden dimensions for the encoder and decoder
+        betaVAE = BetaVAESynth1D(in_channels, latent_dim, hidden_dims)  # Initialize the model
 
-        # Genera un tensor de entrada aleatorio
-        input_tensor = torch.randn(1, in_channels, 94)  # Asume un tamaño de entrada, ajusta según necesidades
+        # Generate a random input tensor
+        input_tensor = torch.randn(1, in_channels, 94)  # Assumes an input size; adjust as needed
         with torch.no_grad():
-            # Pasar el tensor a través del encoder
+            # Pass the tensor through the encoder
             mu, sigma = betaVAE.encode(input_tensor)
-            # Pasar la salida latente a través del decoder
+            # Pass the latent output through the decoder
             decoded_tensor = betaVAE.decode(betaVAE.reparameterize(mu, sigma))
 
-        # Verificar que el tensor de entrada y salida tengan las mismas dimensiones
-        self.assertEqual(input_tensor.shape, decoded_tensor.shape, "El tensor de entrada y salida deben tener las mismas dimensiones.")
+        # Check that the input and output tensors have the same dimensions
+        self.assertEqual(input_tensor.shape, decoded_tensor.shape, "The input and output tensors must have the same dimensions.")
 
 if __name__ == '__main__':
     unittest.main()
