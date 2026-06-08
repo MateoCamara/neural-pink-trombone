@@ -1,3 +1,5 @@
+"""Experiment 1: static spectrogram VAE (also logs spectrogram reconstructions to TensorBoard)."""
+
 import torch
 from torch import Tensor
 from torchvision.utils import make_grid

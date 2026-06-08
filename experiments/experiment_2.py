@@ -1,3 +1,5 @@
+"""Experiment 2: dynamic spectrogram VAE with previous-parameter regularization."""
+
 
 
 import torch

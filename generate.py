@@ -1,3 +1,13 @@
+"""Generate reconstructions / predicted parameters from a trained checkpoint.
+
+Loads a model and its validation dataloader from a YAML config, runs the model
+over the validation set, and saves the predicted/true spectrograms, latent
+variables and synthesizer parameters (and reconstructed audio for VAE models).
+
+Usage:
+    python generate.py --config <file> --checkpoint <ckpt> --output <dir> --number <n>
+"""
+
 import importlib
 import os
 
@@ -57,7 +67,7 @@ def convert_mel_to_audio(mel_spec):
         center=True,
         pad_mode='reflect',
         power=2.0,
-        n_iter=32,  # Número de iteraciones para Griffin-Lim
+        n_iter=32,  # Number of Griffin-Lim iterations
         htk=True,
         fmin=0,
         fmax=8000

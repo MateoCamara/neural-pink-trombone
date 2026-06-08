@@ -1,3 +1,5 @@
+"""1-D convolutional beta-VAE over embedding sequences."""
+
 import torch
 from torch import nn
 from torch.nn import functional as F

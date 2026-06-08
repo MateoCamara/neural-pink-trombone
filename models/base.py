@@ -1,3 +1,5 @@
+"""Abstract base class defining the interface shared by the VAE models (PyTorch Lightning)."""
+
 from typing import List, Any, TypeVar
 from abc import abstractmethod
 import lightning as L

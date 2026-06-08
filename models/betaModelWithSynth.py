@@ -1,3 +1,5 @@
+"""2-D beta-VAE with a projector head that decodes Pink Trombone synthesizer parameters."""
+
 import torch
 from torch import nn
 from torch.nn import functional as F

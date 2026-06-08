@@ -1,3 +1,5 @@
+"""Base PyTorch Lightning training/validation loop shared by the experiments."""
+
 import torch
 from torch import optim
 import lightning as L

@@ -1,3 +1,5 @@
+"""Client that re-synthesizes audio from predicted parameters via the Pink Trombone server (used by the audio-reconstruction loss)."""
+
 import numpy as np
 import requests
 import torch

@@ -1,3 +1,5 @@
+"""Projector-only model (2-D): maps the encoded input directly to synthesizer parameters."""
+
 import torch
 from torch import nn
 from torch.nn import functional as F

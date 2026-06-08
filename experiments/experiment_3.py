@@ -1,3 +1,5 @@
+"""Experiment 3: dynamic embedding projector (EnCodec / wav2vec)."""
+
 
 
 from experiments.baseExperiment import BaseExperiment

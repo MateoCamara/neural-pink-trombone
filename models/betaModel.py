@@ -1,3 +1,5 @@
+"""2-D convolutional beta-VAE over mel spectrograms."""
+
 import torch
 from torch import nn
 from torch.nn import functional as F
