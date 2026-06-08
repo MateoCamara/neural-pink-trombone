@@ -11,20 +11,20 @@ Tensor = TypeVar('torch.tensor')
 
 
 class BetaVAESynth1D(BaseVAE):
-    num_iter = 0  # Variable estática global para llevar la cuenta de las iteraciones
+    num_iter = 0  # Global static variable to keep track of the iterations
 
     def __init__(self, in_channels: int, latent_dim: int, hidden_dims: List = None, beta: int = 4, beta_params: list = [],
                  num_synth_params: int = 8, hidden_dims_synth_stage: List = None, params_weight: int = 1, **kwargs):
         super().__init__()
 
-        # Definición de variables internas
+        # Definition of internal variables
         self.latent_dim = latent_dim
         self.beta = beta
         self.num_synth_params = num_synth_params
         self.beta_params = beta_params
         self.params_weight = params_weight
 
-        # Inicialización de dimensiones ocultas si no se proporcionan
+        # Initialize hidden dimensions if not provided
         if hidden_dims is None:
             hidden_dims = [16, 32, 64, 128]
 
@@ -53,7 +53,7 @@ class BetaVAESynth1D(BaseVAE):
             self.pink_trombone_connection = PinkTromboneConnection(kwargs.get('pt_server', '127.0.0.1'), kwargs.get('pt_port', 3000))
 
     def build_encoder(self, in_channels, hidden_dims):
-        """Construye la parte del codificador del VAE."""
+        """Build the encoder part of the VAE."""
         modules = []
         for h_dim in hidden_dims:
             modules.append(nn.Sequential(
@@ -67,14 +67,14 @@ class BetaVAESynth1D(BaseVAE):
         self.prepare_latent_variables()
 
     def calculate_output_size(self, model, input_tensor):
-        """Calcula el tamaño de salida de un modelo dado un tensor de entrada."""
+        """Compute the output size of a model for a given input tensor."""
         with torch.no_grad():
             for module in model:
                 input_tensor = module(input_tensor)
         return input_tensor.size()
 
     def prepare_latent_variables(self):
-        """Prepara las variables latentes y las capas para mu y log_var."""
+        """Prepare the latent variables and the mu / log_var layers."""
         self.encoder_output_size = self.calculate_output_size(self.encoder, torch.randn(1, 2, 128))
         flat_size = self.encoder_output_size.numel()
         self.encoder_output = nn.Sequential(
@@ -87,7 +87,7 @@ class BetaVAESynth1D(BaseVAE):
         self.fc_var = nn.Linear(flat_size, self.latent_dim)
 
     def build_decoder(self, hidden_dims, in_channels_original):
-        """Construye la parte del decodificador del VAE."""
+        """Build the decoder part of the VAE."""
         self.decoder_input = nn.Sequential(
             nn.Linear(self.latent_dim, self.encoder_output_size.numel()),
             nn.ReLU(),
@@ -121,7 +121,7 @@ class BetaVAESynth1D(BaseVAE):
         )
 
     def encode(self, input: Tensor):
-        """Codifica la entrada y devuelve los códigos latentes."""
+        """Encode the input and return the latent codes."""
         result = self.encoder(input)
         result = self.encoder_output(result)
         mu = self.fc_mu(result)
@@ -129,24 +129,24 @@ class BetaVAESynth1D(BaseVAE):
         return [mu, log_var]
 
     def latent_to_params(self, z: Tensor):
-        """Convierte los códigos latentes en los parámetros sintetizados."""
+        """Convert the latent codes into the synthesized parameters."""
         return self.synth_stage_final_layer(self.synth_stage(z))
 
     def decode(self, z: Tensor):
-        """Decodifica los códigos latentes en la reconstrucción de la entrada."""
+        """Decode the latent codes into the input reconstruction."""
         z = self.decoder_input(z)
         z = z.view(-1, self.encoder_output_size[1], self.encoder_output_size[2])
         result = self.decoder(z)
         return result
 
     def reparameterize(self, mu: Tensor, logvar: Tensor):
-        """Reparametrización para obtener z."""
+        """Reparameterization trick to obtain z."""
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return eps.mul(std).add_(mu)
 
     def forward(self, input: Tensor, params: Tensor, **kwargs):
-        """Propagación hacia adelante del modelo."""
+        """Forward pass of the model."""
         mu, log_var = self.encode(input)
         z = self.reparameterize(mu, log_var)
         return [self.decode(z), input, mu, log_var, self.latent_to_params(z), params]
@@ -174,7 +174,7 @@ class BetaVAESynth1D(BaseVAE):
         return_dict = {'Reconstruction_Loss': recons_loss, 'KLD': weighted_kld_loss}
 
         if self.use_pink_trombone:
-            # TODO: hay que quitar el hardcoding del audiolength
+            # TODO: remove the hardcoded audio length
             regen_mel = self.pink_trombone_connection.regenerate_audio_from_pred_params(params_pred.detach().cpu().numpy(), audio_length=1.0).to(input.device)
             param_audio_regenerated_loss = F.mse_loss(input, regen_mel, reduction='sum') * self.regen_weight
             loss += param_audio_regenerated_loss

@@ -11,7 +11,7 @@ Tensor = TypeVar('torch.tensor')
 
 
 class SynthStage(L.LightningModule):
-    num_iter = 0  # Variable estática global para llevar la cuenta de las iteraciones
+    num_iter = 0  # Global static variable to keep track of the iterations
 
     def __init__(self, codec_dim: int, time_dim: int, hidden_dims: List = None, output_dims: int = None,
                  beta_params: list = [], params_weight: int = 1, num_synth_params: int = 8, **kwargs):
@@ -92,7 +92,7 @@ class SynthStage(L.LightningModule):
         return_dict = {}
 
         if self.use_pink_trombone:
-            # TODO: hay que quitar el hardcoding del audiolength
+            # TODO: remove the hardcoded audio length
             regen_mel = self.pink_trombone_connection.regenerate_audio_from_pred_params(params_pred.detach().cpu().numpy(), audio_length=1.0).to(input.device)
             param_audio_regenerated_loss = F.mse_loss(original_audio, regen_mel, reduction='sum') * self.regen_weight
             loss += param_audio_regenerated_loss
@@ -115,7 +115,7 @@ class SynthStage(L.LightningModule):
         return return_dict
 
     def _calculate_output_size(self, model, input_tensor):
-        """Calcula el tamaño de salida de un modelo dado un tensor de entrada."""
+        """Compute the output size of a model for a given input tensor."""
         with torch.no_grad():
             for module in model:
                 input_tensor = module(input_tensor)
