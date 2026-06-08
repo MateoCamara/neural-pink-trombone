@@ -1,0 +1,30 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+
+# --- Training artifacts / logs ---
+logs/
+lightning_logs/
+runs/
+*.ckpt
+checkpoints/
+Samples/
+Reconstructions/
+events.out.tfevents.*
+
+# --- Generated audio / data ---
+*.wav
+*.flac
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+.DS_Store
