@@ -4,8 +4,6 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 from transformers import Wav2Vec2Model, Wav2Vec2FeatureExtractor
 import torch
-
-import torch
 import numpy as np
 import soundfile as sf
 from tqdm import tqdm
@@ -38,7 +36,7 @@ def process_dataset(dataset_path, folder):
             audio_sample_path = os.path.join(dataset_path, audio_sample_name)
             audio_sample, _ = sf.read(audio_sample_path)
             audio_sample_16k = librosa.resample(y=audio_sample, orig_sr=48_000,
-                                                target_sr=16000)  # necesario para wav2vec, qué mal
+                                                target_sr=16000)  # required for wav2vec, unfortunately
             audio_tensor = processor(audio_sample_16k, return_tensors="pt", padding=False,
                                      sampling_rate=16000).input_values.to(device)
             # Process each sample
@@ -49,7 +47,7 @@ def process_dataset(dataset_path, folder):
 
 
 # Setup the model and device
-device = torch.device('cuda:0')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 processor = Wav2Vec2FeatureExtractor.from_pretrained("facebook/wav2vec2-large-xlsr-53")
 model = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-large-xlsr-53").to(device)
 
