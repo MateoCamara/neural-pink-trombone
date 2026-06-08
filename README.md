@@ -1,4 +1,4 @@
-# README
+# Neural Pink Trombone
 
 ## Introduction
 
@@ -12,23 +12,30 @@ In this project, we propose an approach that integrates biological information f
 
 ## Code Structure
 
-The main file is `main.py`, which acts as a generic runner for VAE (Variational Autoencoder) models.
+The entry point is `run.py`, a generic runner that trains VAE (Variational Autoencoder)
+models from a YAML configuration. Two companion scripts cover the rest of the workflow:
 
-### Main Functions:
+- **`run.py`** — train a model (`python run.py --config <file>`).
+- **`generate.py`** — synthesize / reconstruct audio from a trained checkpoint.
+- **`visualize.py`** — produce the figures and analyses used in the paper.
+
+The codebase is organized into `models/` (the VAE and synthesizer models), `data/`
+(dataloaders, including an online Pink-Trombone-server dataset), `experiments/` (the
+PyTorch Lightning training loops), `metrics/` (ViSQOL), `utils/` and `visualizations/`.
+
+### Main functions of `run.py`:
 
 - **load_model**: Loads the specified model from the `models` module based on the configuration.
 - **load_experiment**: Loads the experiment class from the `experiments` module.
 - **load_dataloader**: Loads the appropriate dataloader according to the specified data type (spectrogram, embedding, etc.).
-- **main**: The main function that orchestrates the loading of configurations, models, data, and the training process.
+- **main**: Orchestrates the loading of configurations, models, data, and the training process.
 
 ### Dependencies:
 
-- Python 3.x
-- PyTorch
-- PyTorch Lightning
-- TensorBoard
-- YAML
-- Other standard Python packages (`argparse`, `importlib`, `os`, etc.)
+- Python 3.10+
+- PyTorch / PyTorch Lightning
+- TensorBoard, librosa, transformers, encodec, scikit-learn, matplotlib/seaborn
+- See `requirements.txt` (curated, cross-platform) for the full list.
 
 ## Usage Instructions
 
@@ -44,16 +51,25 @@ The main file is `main.py`, which acts as a generic runner for VAE (Variational 
    pip install -r requirements.txt
    ```
 
+   For a GPU build, first install the PyTorch wheels matching your CUDA version from
+   [pytorch.org](https://pytorch.org/get-started/locally/). To reproduce the exact
+   original training environment (Linux + CUDA), use `requirements-freeze.txt` instead.
+
 3. **Prepare the data**:
 
-   - Ensure that the data is organized as expected by the dataloaders.
+   - Ensure that the data is organized as expected by the dataloaders. The `data_path`
+     in each config points to a sibling data directory (e.g.
+     `../neural-pink-trombone-data/...`); update it to match your setup.
    - Update the necessary paths and parameters in the YAML configuration file.
 
-4. **Run the main script**:
+4. **Run the training script**:
 
    ```bash
-   python main.py --config ./configs/config_encodec_dynamic_0.yaml
+   python run.py --config ./configs/config_encodec_dynamic_0.yaml
    ```
+
+   The `trainer_params.devices` field in each config defaults to `[0]` (the first GPU);
+   adjust it for your hardware, or set the trainer to CPU when no GPU is available.
 
 ## Configuration
 
