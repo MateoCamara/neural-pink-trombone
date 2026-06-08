@@ -43,7 +43,7 @@ def set_weights_to_model(model, state_dict_path, device='cpu'):
 
 def _compute_mel_spectrogram(audio, sr, fmax, power=True):
     """
-    Calcula el espectrograma MEL de un audio dado.
+    Compute the MEL spectrogram of a given audio signal.
     """
     spec_transform = torchaudio.transforms.MelSpectrogram(
         sample_rate=sr,

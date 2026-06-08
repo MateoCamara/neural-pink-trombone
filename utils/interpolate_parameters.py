@@ -2,12 +2,12 @@ import numpy as np
 
 
 def interpolate_array(data, fit_count):
-    """Interpola linealmente los datos a un nuevo tamaño de array."""
+    """Linearly interpolate the data to a new array size."""
     linear_interpolate = lambda before, after, at_point: before + (after - before) * at_point
 
     spring_factor = (len(data) - 1) / (fit_count - 1)
     new_data = np.zeros(fit_count)
-    new_data[0] = data[0]  # asignación inicial
+    new_data[0] = data[0]  # initial assignment
 
     for i in range(1, fit_count - 1):
         tmp = i * spring_factor
@@ -16,12 +16,12 @@ def interpolate_array(data, fit_count):
         at_point = tmp - before
         new_data[i] = linear_interpolate(data[before], data[after], at_point)
 
-    new_data[-1] = data[-1]  # asignación final
+    new_data[-1] = data[-1]  # final assignment
     return new_data.tolist()
 
 
 def interpolate_params(param_list, sampling_rate, audio_length):
-    """Interpola una lista de parámetros para coincidir con el número de muestras necesario."""
+    """Interpolate a list of parameters to match the required number of samples."""
     if audio_length == 0:
         assert False, "Audio length cannot be zero."
 
