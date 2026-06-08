@@ -6,14 +6,14 @@ from sklearn.metrics import mean_absolute_error
 
 from visualizations import visualization_utils
 
-# Define el directorio raíz donde se encuentran los datos
+# Define the root directory where the data lives
 root_dir = "../../generated_samples"
 
-# Definiciones para las configuraciones de experimentos y redes
+# Definitions for the experiment and network configurations
 experiments = {
     "dynamic_10changes": "fast change",
     "dynamic": "smooth change",
-    "": "static"  # directorio sin sufijo adicional para static
+    "": "static"  # directory with no extra suffix for static
 }
 
 networks = ["betaVAESynth", "encodec", "wav2vec"]
@@ -23,32 +23,32 @@ params_names = [
     'lip_diam', 'constriction_index', 'constriction_diam', 'throat_diam'
 ]
 
-# Lista para almacenar los datos
+# List to store the data
 data = []
 
-# Recorre cada red y cada tipo de experimento para cargar los datos
+# Iterate over each network and experiment type to load the data
 for network in networks:
     for suffix, experiment_type in experiments.items():
-        # Construye el path al directorio específico
+        # Build the path to the specific directory
         dir_path = f"{root_dir}/{network}_{suffix}_version_1" if suffix else f"{root_dir}/{network}_version_1"
 
         if not os.path.exists(dir_path):
             dir_path = f"{root_dir}/{network}_{suffix}_version_0" if suffix else f"{root_dir}/{network}_version_0"
 
-        # Verifica si el directorio existe
+        # Check whether the directory exists
         if os.path.exists(dir_path):
-            # Listas para almacenar los datos de cada parámetro por separado
+            # Lists to store the data of each parameter separately
             all_preds = [[] for _ in range(6)]
             all_trues = [[] for _ in range(6)]
 
-            # Recorre los subdirectorios de muestras
+            # Iterate over the sample subdirectories
             for sample_dir in os.listdir(dir_path):
                 if sample_dir.startswith("sample_"):
                     sample_path = os.path.join(dir_path, sample_dir)
                     param_pred_path = os.path.join(sample_path, "paramspred.npy")
                     param_true_path = os.path.join(sample_path, "paramstrue.npy")
 
-                    # Carga los arrays
+                    # Load the arrays
                     if os.path.exists(param_pred_path) and os.path.exists(param_true_path):
                         y_pred = np.load(param_pred_path)
                         y_true = np.load(param_true_path)
@@ -56,12 +56,12 @@ for network in networks:
                         y_pred = visualization_utils.normalizar_params(y_pred)
                         y_true = visualization_utils.normalizar_params(y_true)
 
-                        # Distribuye los datos de cada parámetro
-                        for i in range(6):  # Asume que hay 6 parámetros
+                        # Distribute the data of each parameter
+                        for i in range(6):  # Assumes there are 6 parameters
                             all_preds[i].append(y_pred[i])
                             all_trues[i].append(y_true[i])
 
-            # Convierte las listas a arrays únicos y calcula el MSE para cada parámetro
+            # Convert the lists to single arrays and compute the MSE for each parameter
             for i in range(6):
                 if all_preds[i] and all_trues[i]:
                     correction = 1
@@ -76,7 +76,7 @@ for network in networks:
                             "Error": error
                         })
 
-# Crea un DataFrame para los resultados
+# Build a DataFrame for the results
 import pandas as pd
 
 df = pd.DataFrame(data, columns=['Experiment', 'Network', 'Parameter', 'Error'])
@@ -84,11 +84,11 @@ df = pd.DataFrame(data, columns=['Experiment', 'Network', 'Parameter', 'Error'])
 good_names = {"betaVAESynth": "VAE+Projector", "encodec": "EnCodec", "wav2vec": "Wav2Vec"}
 df["Network"] = df["Network"].apply(lambda x: good_names[x])
 
-# Configuración de la visualización con Seaborn
+# Visualization setup with Seaborn
 sns.set(style="whitegrid")
 
-# Crea una figura para alojar los subplots
-fig, axes = plt.subplots(2, 3, figsize=(18, 12))  # Configura el tamaño general de la figura
+# Create a figure to hold the subplots
+fig, axes = plt.subplots(2, 3, figsize=(18, 12))  # Set the overall figure size
 fig.suptitle('Error Metrics for Each Parameter Across Experiments and Networks', fontsize=16)
 
 sns.set_context("talk")
@@ -105,7 +105,7 @@ for i, param in enumerate(params_names, start=1):
 plt.tight_layout()
 plt.show()
 
-# inclina un poco las etiquetas del eje x
+# tilt the x-axis labels a bit
 plt.figure(figsize=(18, 10))
 for i, param in enumerate(params_names, start=1):
     plt.subplot(2, 3, i)

@@ -4,23 +4,23 @@ import soundfile as sf
 
 
 def process_audio_files(source_dir, target_dir, target_sr=48000):
-    # Crear el directorio de destino si no existe
+    # Create the target directory if it does not exist
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    # Recorrer todos los subdirectorios en el directorio fuente
+    # Iterate over all subdirectories in the source directory
     for subdir in os.listdir(source_dir):
         if os.path.isdir(os.path.join(source_dir, subdir)):
             subdir_path = os.path.join(source_dir, subdir)
             target_subdir_path = os.path.join(target_dir, subdir)
 
-            # Crear subdirectorios en el directorio de destino si no existen
+            # Create subdirectories in the target directory if they do not exist
             if not os.path.exists(target_subdir_path):
                 os.makedirs(target_subdir_path)
 
             filenames = [f for f in os.listdir(subdir_path) if f.endswith('.wav')]
 
-            # Determinar la duración mínima de los archivos en el subdirectorio
+            # Determine the minimum duration of the files in the subdirectory
             for filename in filenames:
                 ref_file_name = filename.replace('_filtered', '')
                 human_equivalent = os.path.join(human_directory_visqol, ref_file_name)
@@ -31,11 +31,11 @@ def process_audio_files(source_dir, target_dir, target_sr=48000):
 
                 file_path = os.path.join(subdir_path, filename)
                 audio, sr = librosa.load(file_path, sr=48000)
-                # Re-muestrear a 16 kHz
+                # Resample to 16 kHz
                 audio = librosa.resample(audio, orig_sr=48000, target_sr=target_sr)
-                # Asegurarse de que todos los archivos tienen la misma duración
+                # Make sure all files have the same duration
                 audio = audio[:duration_human]
-                # Guardar el archivo procesado
+                # Save the processed file
                 target_file_path = os.path.join(target_subdir_path, filename)
                 sf.write(target_file_path, audio, target_sr, format='WAV', subtype='PCM_16')
 

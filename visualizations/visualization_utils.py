@@ -64,7 +64,7 @@ def convert_mel_to_audio(mel_spec):
         center=True,
         pad_mode='reflect',
         power=2.0,
-        n_iter=32,  # Número de iteraciones para Griffin-Lim
+        n_iter=32,  # Number of Griffin-Lim iterations
         htk=True,
         fmin=0,
         fmax=8000

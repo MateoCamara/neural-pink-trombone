@@ -16,7 +16,7 @@ from utils import utils
 from visualizations.visualization_utils import load_model, set_weights_to_model
 
 
-# cargar el archivo de audio
+# load the audio file
 
 def load_audio_file(audio_path, sr):
     return librosa.load(audio_path, sr=sr)[0]
@@ -40,11 +40,11 @@ def load_audio_file(audio_path, sr):
 #     model.load_state_dict(fixed_state_dict)
 #     return model
 
-# computar su espectrograma mel
+# compute its mel spectrogram
 
 def compute_mel_spectrogram(audio, sr, power=True):
     """
-    Calcula el espectrograma MEL de un audio dado.
+    Compute the MEL spectrogram of a given audio signal.
     """
     spec_transform = torchaudio.transforms.MelSpectrogram(
         sample_rate=sr,
@@ -71,7 +71,7 @@ def compute_mel_spectrogram(audio, sr, power=True):
     else:
         return S
 
-# normalizar el espectrograma mel
+# normalize the mel spectrogram
 
 def normalizar_mel_spec(mel_spec):
     min_spec_value = -65
@@ -80,42 +80,42 @@ def normalizar_mel_spec(mel_spec):
     mel_spec = (mel_spec - min_spec_value) / (max_spec_value - min_spec_value)
     return mel_spec
 
-# Calcular su frecuencia fundamental con pyin
+# Compute its fundamental frequency with pyin
 def compute_f0(y, sr):
     return librosa.pyin(y, fmin=librosa.note_to_hz('C2'), fmax=librosa.note_to_hz('C7'), sr=sr)
 
-# forzar la f0 a 100 hz
+# force the f0 to 100 Hz
 
 def force_f0(audio, target_f0, pyin_f0, sr):
-    if np.nanmean(pyin_f0) > 0:  # Evitar divisiones por cero si f0 es NaN
+    if np.nanmean(pyin_f0) > 0:  # Avoid division by zero if f0 is NaN
         stretch_factor = target_f0 / np.nanmean(pyin_f0)
     else:
         stretch_factor = 1.0
 
-    # Cambiar la frecuencia de la señal
+    # Change the frequency of the signal
     return librosa.effects.pitch_shift(audio, sr=sr, n_steps=-12 * np.log2(stretch_factor))
 
-# pasarlo por la red neuronal
+# pass it through the neural network
 def predict_parameters(model, mel_spec):
     return model.forward(input=mel_spec, params=None)
 
-# desnormalizar los parámetros
+# denormalize the parameters
 def denormalizar_params(params):
     for i, (low, high) in enumerate(utils.bounds):
         params[i] = params[i] * (high - low) + low
     return params
 
-# generar el audio
+# generate the audio
 def generate_audio(params, size):
     servidor = PTServidorDataset(servidor_url='127.0.0.1', servidor_port=3000, tamano_batch=1, iteraciones=1,
                                 number_of_changes=size)
     return servidor.generate_specific_audio(params, length= size / 94)
 
-# guardar el audio
+# save the audio
 def save_audio(audio, output_path, sr):
     write(output_path, sr, audio)
 
-# guardar los parámetros
+# save the parameters
 def save_params(params, output_path):
     np.save(output_path, params)
 
@@ -157,7 +157,7 @@ if __name__ == '__main__':
 
             pred_params = []
             for index, (mel_time_instant, pyin_time_instant) in tqdm(enumerate(zip(mel_spec.T, pyin_f0))):
-                # input es igual al instante actual y al anterior
+                # input is the current time step together with the previous one
                 if index == 0:
                     input = torch.cat([mel_spec[:, index].unsqueeze(1)] * 2, dim=1)
                 else:

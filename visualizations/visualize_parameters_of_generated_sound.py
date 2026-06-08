@@ -52,14 +52,14 @@ if __name__ == '__main__':
 
         df_combined = pd.concat([df, df_filtered], axis=1)
 
-        # Crear un gráfico por cada parámetro
+        # Create a plot for each parameter
         # for param in param_names:
         #     plt.figure(figsize=(10, 6))
         #     sns.lineplot(data=df_combined, x=df_combined.index, y=param, label='Normal')
-        #     sns.lineplot(data=df_combined, x=df_combined.index, y=param + "_filtered", label='Filtrado')
-        #     plt.title(f'Comparación de {param} original y filtrado')
-        #     plt.xlabel('Índice')
-        #     plt.ylabel('Valor')
+        #     sns.lineplot(data=df_combined, x=df_combined.index, y=param + "_filtered", label='Filtered')
+        #     plt.title(f'Comparison of original and filtered {param}')
+        #     plt.xlabel('Index')
+        #     plt.ylabel('Value')
         #     plt.legend()
         #     plt.show()
         # audio = generate_audio(filtered_params, size)
@@ -76,7 +76,7 @@ if __name__ == '__main__':
             index_min, index_max = tongue.get_index_range_based_on_diam()
             index_ranges.append((index_min, index_max))
 
-        index_mins, index_maxs = zip(*index_ranges)  # Descomprime las tuplas en dos listas separadas
+        index_mins, index_maxs = zip(*index_ranges)  # Unzip the tuples into two separate lists
 
         # plt.figure(figsize=(10, 6))
         # plt.plot(diameters, index_mins, '-o', label='Minimum Index')
@@ -98,33 +98,33 @@ if __name__ == '__main__':
         # from mpl_toolkits.mplot3d import Axes3D
         import numpy as np
 
-        # Configuración inicial de la figura y el eje 3D
+        # Initial setup of the figure and the 3D axis
         # sns.set_theme(style="whitegrid")
         sns.set_context("notebook")
         fig = plt.figure(figsize=(8, 8))
         ax = fig.add_subplot(111, projection='3d')
-        # ax.set_zlim([1, 1.7])  # Ajusta según tus datos
+        # ax.set_zlim([1, 1.7])  # Adjust to your data
 
 
 
-        # Suponiendo que diameters, index_mins, y index_maxs están definidos
-        # Plot de las líneas para mínimo y máximo índice
+        # Assuming diameters, index_mins, and index_maxs are defined
+        # Plot the lines for minimum and maximum index
         ax.plot(diameters, index_mins, zs=np.min(filtered_params[4]), color='purple', zdir='z', label='Minimum Index', marker='o', markersize=1)
         ax.plot(diameters, index_maxs, zs=np.min(filtered_params[4]), color='purple', zdir='z', label='Maximum Index', marker='o', markersize=1)
 
         ax.plot(diameters, index_mins, zs=np.max(filtered_params[4]), color='purple', zdir='z', label='Minimum Index', marker='o', markersize=1)
         ax.plot(diameters, index_maxs, zs=np.max(filtered_params[4]), color='purple', zdir='z', label='Maximum Index', marker='o', markersize=1)
 
-        # Relleno entre las líneas en 3D (esto es más complicado y requiere manipulación manual)
-        # Debido a la complejidad, puedes optar por omitir esta parte o necesitarás crear un malla y usar plot_surface para un efecto similar
+        # Fill between the lines in 3D (trickier; needs manual handling)
+        # Because of the complexity, you can skip this part or build a mesh and use plot_surface for a similar effect
 
-        # Datos para el scatter en 3D
+        # Data for the 3D scatter
         x = np.array(filtered_params[3])
         y = np.array(filtered_params[2])
         z = np.array(filtered_params[4])
         colors = np.linspace(0, 8.7, len(x))
 
-        # Scatter en 3D con gradiente de color
+        # 3D scatter with a color gradient
         sc = ax.scatter(x, y, z, c=colors, cmap='coolwarm', label='Generated')
 
 
@@ -133,7 +133,7 @@ if __name__ == '__main__':
         sorted_y = y[sorted_indices]
         sorted_z = z[sorted_indices]
 
-        # Dibuja una línea continua a lo largo de los puntos ordenados proyectada hasta z=0
+        # Draw a continuous line along the sorted points projected down to z=0
         ax.scatter(np.ones_like(sorted_x)*2, sorted_y, sorted_z, color='gray', alpha=0.2, marker='o', s=2)
 
         for (i, j, k) in zip(x, y, z):
@@ -151,24 +151,24 @@ if __name__ == '__main__':
 
 
 
-        # Crear una barra de color
-        # poner la barra abajo en horizontal
-        # tamaño pequeño
+        # Create a color bar
+        # place the bar at the bottom, horizontally
+        # small size
         cbar = plt.colorbar(sc, ax=ax, fraction=0.046, pad=0.1, orientation='horizontal')
 
         cbar.set_label('Time (in seconds)')
 
 
-        # Configuración de etiquetas y título
+        # Labels and title setup
         ax.set_xlabel('Diameter')
         ax.set_ylabel('Index')
         ax.set_zlabel('Lips')
         ax.set_title('Tongue and lips Position /ieaou/ sound')
 
-        # Mostrar leyenda y cuadrícula
+        # Show legend and grid
         # ax.legend()
         ax.grid(True)
 
-        # Mostrar el gráfico
+        # Show the plot
         plt.show()
 

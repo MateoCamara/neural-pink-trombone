@@ -30,7 +30,7 @@ plt.xlim(0, 20000)
 # lineplot
 sns.lineplot(data=params, x='Step', y='Value', hue='model', palette=color_dict)
 plt.title('Spectrogram reconstruction loss over time')
-# titulo x
+# x-axis title
 plt.ylabel('MSE')
 plt.show()
 

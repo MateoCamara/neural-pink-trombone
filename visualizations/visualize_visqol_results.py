@@ -46,9 +46,9 @@ def visualize_visqol_results():
 
     sns.set_theme(style="whitegrid")
     plt.figure(figsize=(8, 6))
-    # cambia los colores a rojo y morado
+    # change the colors to red and purple
     # sns.set_palette("husl")
-    # cambia el tamaño de la letra
+    # change the font size
     sns.set_context("talk")
     ax = sns.histplot(data=df, x='ViSQOL score', hue='model', multiple='stack', bins=20)
     ax.set_title('Histogram of ViSQOL scores')
