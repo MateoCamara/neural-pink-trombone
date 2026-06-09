@@ -36,6 +36,17 @@ class DynamicSpectrogramDataloader(Dataset):
         # Crea una lista de los nombres de archivo (claves del JSON)
         self.audio_files = list(self.metadata.keys())
 
+        # --- Waveform augmentation (solo en train) para cerrar el domain gap
+        # sintetico -> voz real. Perturba la acustica del clip, NUNCA las etiquetas
+        # articulatorias, asi que el modelo aprende invarianza a nivel/ruido/sala/microfono.
+        self.augment = bool(kwargs.get('augment', False)) and \
+            str(audio_dir).replace('\\', '/').rstrip('/').endswith('train')
+        self.augmenter = None
+        if self.augment:
+            from .augmentations import WaveformAugment
+            self.augmenter = WaveformAugment(sample_rate=int(kwargs.get('sample_rate', 48000)),
+                                             **(kwargs.get('augmentation', {}) or {}))
+
     def __len__(self):
         return len(self.audio_files)
 
@@ -45,6 +56,9 @@ class DynamicSpectrogramDataloader(Dataset):
 
         # Carga el archivo de audio
         waveform, sample_rate = torchaudio.load(audio_path)
+        if self.augmenter is not None:
+            w = self.augmenter(waveform.squeeze(0).numpy(), sample_rate)
+            waveform = torch.from_numpy(w).float().unsqueeze(0)
         mel_spec = self._compute_mel_spectrogram(waveform, sample_rate, 8000, power=True)
         mel_spec = self.normalizar_mel_spec(mel_spec).float()
 

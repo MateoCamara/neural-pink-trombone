@@ -1,0 +1,53 @@
+model_params:
+  name: 'BetaVAESynth1D'
+  in_channels: 2
+  latent_dim: 64
+  beta: 4
+  beta_params: [1, 1, 1, 1, 1, 1]
+  hidden_dims: [8, 16, 32, 64, 128]
+  num_synth_params: 6
+  use_previous_params_regularization: True
+  huber_delta: 1.5
+  beta_previous_params: [1, 1, 1, 1, 1, 1]
+
+data_params:
+  data_path: "../neural-pink-trombone-data/pt_dataset_dynamic_simplified"
+  data_type: "spectrogram_dynamic"
+  num_workers: 16          # tune to the training machine (was 31)
+  batch_size: 32
+  # --- Domain-gap augmentation: applied ONLY to the train split, to the raw waveform
+  # BEFORE the mel, so articulatory labels stay valid. Teaches invariance to the things
+  # that differ between synthetic Pink Trombone audio and a real microphone. ---
+  augment: true
+  sample_rate: 48000
+  augmentation:
+    p: 0.9              # prob. of augmenting a clip at all (some stay clean)
+    gain_prob: 0.8
+    gain_db: [-12.0, 6.0]
+    noise_prob: 0.8
+    snr_db: [5.0, 35.0]
+    reverb_prob: 0.5
+    rt60_s: [0.1, 0.6]
+    reverb_wet: [0.2, 0.7]
+    tilt_prob: 0.6
+    tilt_db: [-8.0, 8.0]
+    lowpass_prob: 0.3
+    lowpass_hz: [4000.0, 9000.0]
+
+exp_params:
+  name_exp: 'Experiment2'
+  LR: 0.001
+  weight_decay: 0.0
+  kld_weight: 0.000001
+  params_weight: 10
+  previous_params_weight: 10
+  manual_seed: 1265
+  patience: 100
+
+trainer_params:
+  devices: [ 0 ]
+  max_epochs: 200
+
+logging_params:
+  save_dir: "logs/"
+  name: "betaVAESynth_dynamic_aug"
